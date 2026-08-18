@@ -2,10 +2,13 @@ import { useCallback, useRef, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { CsvEditor } from '../components/CsvEditor'
 import { downloadCsv, normalizeRows, parseCsv, type CsvData } from '../utils/csv'
+import { defaultStartlistSettings, type StartlistSettings } from './startlistSettings'
+import { StartlistSettingsForm } from './StartlistSettingsForm'
 import './StartlistGenerator.css'
 
 export default function StartlistGenerator() {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [settings, setSettings] = useState<StartlistSettings>(defaultStartlistSettings)
   const [data, setData] = useState<CsvData | null>(null)
   const [fileName, setFileName] = useState('export.csv')
   const [error, setError] = useState<string | null>(null)
@@ -62,6 +65,8 @@ export default function StartlistGenerator() {
       </header>
 
       <main className="tool-main">
+        <StartlistSettingsForm settings={settings} onChange={setSettings} />
+
         {error && <p className="error">{error}</p>}
 
         {!data && !error && (

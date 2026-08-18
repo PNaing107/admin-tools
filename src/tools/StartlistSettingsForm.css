@@ -1,0 +1,77 @@
+.settings-form {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  border: 1px solid #dde3ef;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(22 33 62 / 6%);
+}
+
+.settings-heading {
+  margin: 0 0 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #16213e;
+}
+
+.settings-fieldset {
+  margin: 0 0 1.25rem;
+  padding: 0;
+  border: none;
+}
+
+.settings-fieldset:last-child {
+  margin-bottom: 0;
+}
+
+.settings-fieldset legend {
+  margin-bottom: 0.75rem;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a849c;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: #5a6278;
+}
+
+.settings-field span {
+  line-height: 1.35;
+}
+
+.settings-field input,
+.settings-field select {
+  border: 1px solid #c8d0e0;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  background: #fff;
+  color: #1a1a2e;
+}
+
+.settings-field input:focus,
+.settings-field select:focus {
+  outline: none;
+  border-color: #3d5af1;
+  box-shadow: 0 0 0 2px rgb(61 90 241 / 15%);
+}
+
+.settings-field input[type='time'] {
+  max-width: 10rem;
+}
+
+.settings-field input[type='number'] {
+  max-width: 8rem;
+}
