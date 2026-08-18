@@ -1,0 +1,101 @@
+.tool-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.tool-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: #3d5af1;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.tool-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #16213e;
+}
+
+.subtitle {
+  margin: 0;
+  color: #5a6278;
+  font-size: 0.95rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.toolbar button,
+.empty-actions button {
+  border: 1px solid #c8d0e0;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  color: #1a1a2e;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.toolbar button:hover,
+.empty-actions button:hover {
+  background: #eef2f9;
+  border-color: #9aa8c4;
+}
+
+.toolbar button.primary {
+  background: #3d5af1;
+  border-color: #3d5af1;
+  color: #fff;
+}
+
+.toolbar button.primary:hover {
+  background: #2f49d4;
+  border-color: #2f49d4;
+}
+
+.error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: #fde8e8;
+  color: #9b1c1c;
+  border: 1px solid #f5c2c2;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  border: 2px dashed #c8d0e0;
+  border-radius: 12px;
+  background: #fff;
+  color: #5a6278;
+}
+
+.empty-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.tool-main {
+  min-height: 400px;
+}
