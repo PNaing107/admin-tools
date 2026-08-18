@@ -61,3 +61,9 @@ export function getAverageEntrantsPerSlot(
   if (registrationSlots <= 0) return null
   return Math.ceil(totalEntrants / registrationSlots)
 }
+
+/** Bike racks needed, always rounded up. */
+export function getBikeRacksNeeded(totalEntrants: number, bikesPerRack: number): number | null {
+  if (bikesPerRack <= 0) return null
+  return Math.ceil(totalEntrants / bikesPerRack)
+}

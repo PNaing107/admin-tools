@@ -14,6 +14,7 @@ import {
 import {
   defaultStartlistSettings,
   getAverageEntrantsPerSlot,
+  getBikeRacksNeeded,
   getRegistrationSlotDurationMinutes,
   type StartlistSettings,
 } from './startlistSettings'
@@ -162,6 +163,10 @@ export default function StartlistGenerator() {
             <div className="upload-stats-row">
               <dt>Average people per registration slot</dt>
               <dd>{getAverageEntrantsPerSlot(uploadStats.total, settings.registrationSlots) ?? '—'}</dd>
+            </div>
+            <div className="upload-stats-row">
+              <dt>Bike racks needed</dt>
+              <dd>{getBikeRacksNeeded(uploadStats.total, settings.bikesPerRack) ?? '—'}</dd>
             </div>
           </dl>
           <h3 className="upload-stats-heading">Entrants per category</h3>
