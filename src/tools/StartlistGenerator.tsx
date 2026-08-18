@@ -11,7 +11,7 @@ import {
   type ColumnCount,
   type CsvData,
 } from '../utils/csv'
-import { defaultStartlistSettings, type StartlistSettings } from './startlistSettings'
+import { defaultStartlistSettings, getRegistrationSlotDurationMinutes, type StartlistSettings } from './startlistSettings'
 import { StartlistSettingsForm } from './StartlistSettingsForm'
 import './StartlistGenerator.css'
 
@@ -150,6 +150,10 @@ export default function StartlistGenerator() {
               <dt>Total Number of Entrants</dt>
               <dd>{uploadStats.total}</dd>
             </div>
+            <div className="upload-stats-row">
+              <dt>Registration slot duration</dt>
+              <dd>{formatSlotDuration(getRegistrationSlotDurationMinutes(settings))}</dd>
+            </div>
           </dl>
           <h3 className="upload-stats-heading">Entrants per category</h3>
           {uploadStats.counts.length === 0 ? (
@@ -167,6 +171,11 @@ export default function StartlistGenerator() {
       )}
     </div>
   )
+}
+
+function formatSlotDuration(minutes: number | null): string {
+  if (minutes === null) return '—'
+  return minutes === 1 ? '1 minute' : `${minutes} minutes`
 }
 
 function AlertModal({
