@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactN
 import { Link } from 'react-router-dom'
 import { CsvEditor } from '../components/CsvEditor'
 import {
+  countRowsByColumn,
   downloadCsv,
   findMissingHeaders,
   getCsvHeaders,
   normalizeRows,
   parseCsv,
+  type ColumnCount,
   type CsvData,
 } from '../utils/csv'
 import { defaultStartlistSettings, type StartlistSettings } from './startlistSettings'
@@ -29,6 +31,9 @@ export default function StartlistGenerator() {
   const [fileName, setFileName] = useState('export.csv')
   const [error, setError] = useState<string | null>(null)
   const [missingHeaders, setMissingHeaders] = useState<string[] | null>(null)
+  const [uploadStats, setUploadStats] = useState<{ total: number; counts: ColumnCount[] } | null>(
+    null,
+  )
 
   const handleFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -36,6 +41,7 @@ export default function StartlistGenerator() {
 
     setError(null)
     setMissingHeaders(null)
+    setUploadStats(null)
     try {
       const text = await file.text()
       const parsed = normalizeRows(await parseCsv(text))
@@ -47,6 +53,7 @@ export default function StartlistGenerator() {
       }
       setData(parsed)
       setFileName(file.name.endsWith('.csv') ? file.name : `${file.name}.csv`)
+      setUploadStats(countRowsByColumn(parsed, 'Category'))
     } catch {
       setError('Could not parse this file. Please upload a valid CSV.')
       setData(null)
@@ -60,6 +67,7 @@ export default function StartlistGenerator() {
   }, [data, fileName])
 
   const closeMissingHeadersModal = useCallback(() => setMissingHeaders(null), [])
+  const closeUploadStatsModal = useCallback(() => setUploadStats(null), [])
 
   return (
     <div className="tool-page">
@@ -119,14 +127,42 @@ export default function StartlistGenerator() {
       {missingHeaders && (
         <AlertModal
           title="Missing required CSV headers"
+          variant="error"
           onClose={closeMissingHeadersModal}
         >
           <p>This file is missing the following required fields:</p>
-          <ul className="missing-headers-list">
+          <ul className="modal-list">
             {missingHeaders.map((header) => (
               <li key={header}>{header}</li>
             ))}
           </ul>
+        </AlertModal>
+      )}
+
+      {uploadStats && (
+        <AlertModal
+          title="CSV uploaded successfully"
+          variant="success"
+          onClose={closeUploadStatsModal}
+        >
+          <dl className="upload-stats">
+            <div className="upload-stats-row">
+              <dt>Total Number of Entrants</dt>
+              <dd>{uploadStats.total}</dd>
+            </div>
+          </dl>
+          <h3 className="upload-stats-heading">Entrants per category</h3>
+          {uploadStats.counts.length === 0 ? (
+            <p>No entrant rows were found in this file.</p>
+          ) : (
+            <ul className="modal-list">
+              {uploadStats.counts.map(({ value, count }) => (
+                <li key={value}>
+                  {value} - {count}
+                </li>
+              ))}
+            </ul>
+          )}
         </AlertModal>
       )}
     </div>
@@ -137,10 +173,12 @@ function AlertModal({
   title,
   children,
   onClose,
+  variant = 'error',
 }: {
   title: string
   children: ReactNode
   onClose: () => void
+  variant?: 'error' | 'success'
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -157,7 +195,7 @@ function AlertModal({
   return (
     <dialog
       ref={dialogRef}
-      className="alert-modal"
+      className={`alert-modal alert-modal--${variant}`}
       aria-labelledby="alert-modal-title"
       onClick={(event) => {
         if (event.target === dialogRef.current) dialogRef.current.close()

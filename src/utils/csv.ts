@@ -47,3 +47,31 @@ export function findMissingHeaders(headers: string[], required: readonly string[
   const present = new Set(headers)
   return required.filter((header) => !present.has(header))
 }
+
+export interface ColumnCount {
+  value: string
+  count: number
+}
+
+export function countRowsByColumn(
+  data: CsvData,
+  columnName: string,
+): { total: number; counts: ColumnCount[] } {
+  const headers = getCsvHeaders(data)
+  const colIndex = headers.indexOf(columnName)
+  const rows = data.slice(1)
+  const tally = new Map<string, number>()
+
+  if (colIndex >= 0) {
+    for (const row of rows) {
+      const value = (row[colIndex] ?? '').trim() || '(blank)'
+      tally.set(value, (tally.get(value) ?? 0) + 1)
+    }
+  }
+
+  const counts = [...tally.entries()]
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => a.value.localeCompare(b.value))
+
+  return { total: rows.length, counts }
+}
