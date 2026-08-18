@@ -11,7 +11,12 @@ import {
   type ColumnCount,
   type CsvData,
 } from '../utils/csv'
-import { defaultStartlistSettings, getRegistrationSlotDurationMinutes, type StartlistSettings } from './startlistSettings'
+import {
+  defaultStartlistSettings,
+  getAverageEntrantsPerSlot,
+  getRegistrationSlotDurationMinutes,
+  type StartlistSettings,
+} from './startlistSettings'
 import { StartlistSettingsForm } from './StartlistSettingsForm'
 import './StartlistGenerator.css'
 
@@ -153,6 +158,10 @@ export default function StartlistGenerator() {
             <div className="upload-stats-row">
               <dt>Registration slot duration</dt>
               <dd>{formatSlotDuration(getRegistrationSlotDurationMinutes(settings))}</dd>
+            </div>
+            <div className="upload-stats-row">
+              <dt>Average people per registration slot</dt>
+              <dd>{getAverageEntrantsPerSlot(uploadStats.total, settings.registrationSlots) ?? '—'}</dd>
             </div>
           </dl>
           <h3 className="upload-stats-heading">Entrants per category</h3>

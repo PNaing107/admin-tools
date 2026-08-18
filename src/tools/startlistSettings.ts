@@ -52,3 +52,12 @@ export function getRegistrationSlotDurationMinutes(settings: StartlistSettings):
 
   return Math.round(duration)
 }
+
+/** Average people per registration slot, always rounded up. */
+export function getAverageEntrantsPerSlot(
+  totalEntrants: number,
+  registrationSlots: number,
+): number | null {
+  if (registrationSlots <= 0) return null
+  return Math.ceil(totalEntrants / registrationSlots)
+}
