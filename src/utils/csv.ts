@@ -35,3 +35,15 @@ export function normalizeRows(data: CsvData): CsvData {
     return padded
   })
 }
+
+/** First-row headers, with a UTF-8 BOM stripped from the first cell if present. */
+export function getCsvHeaders(data: CsvData): string[] {
+  const headers = data[0] ?? []
+  if (headers.length === 0) return []
+  return headers.map((header, index) => (index === 0 ? header.replace(/^\uFEFF/, '') : header))
+}
+
+export function findMissingHeaders(headers: string[], required: readonly string[]): string[] {
+  const present = new Set(headers)
+  return required.filter((header) => !present.has(header))
+}

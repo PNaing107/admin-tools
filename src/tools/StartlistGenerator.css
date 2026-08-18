@@ -99,3 +99,55 @@
 .tool-main {
   min-height: 400px;
 }
+
+.alert-modal {
+  width: min(32rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid #dde3ef;
+  border-radius: 12px;
+  background: #fff;
+  color: #1a1a2e;
+  box-shadow: 0 8px 32px rgb(22 33 62 / 18%);
+}
+
+.alert-modal::backdrop {
+  background: rgb(22 33 62 / 45%);
+}
+
+.alert-modal h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #9b1c1c;
+}
+
+.alert-modal p {
+  margin: 0 0 0.75rem;
+  color: #5a6278;
+}
+
+.missing-headers-list {
+  margin: 0 0 1.25rem;
+  padding-left: 1.25rem;
+  color: #16213e;
+}
+
+.missing-headers-list li {
+  margin-bottom: 0.4rem;
+  word-break: break-word;
+}
+
+.alert-modal-ok {
+  display: block;
+  margin-left: auto;
+  border: 1px solid #3d5af1;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  background: #3d5af1;
+  color: #fff;
+}
+
+.alert-modal-ok:hover {
+  background: #2f49d4;
+  border-color: #2f49d4;
+}
