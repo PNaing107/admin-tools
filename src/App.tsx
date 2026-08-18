@@ -41,7 +41,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div>
-          <h1>CSV Editor</h1>
+          <h1>Startlist Generator</h1>
           <p className="subtitle">Upload, edit, and download CSV files — entirely in your browser.</p>
         </div>
         <div className="toolbar">
@@ -54,9 +54,6 @@ function App() {
           />
           <button type="button" onClick={() => fileInputRef.current?.click()}>
             Upload CSV
-          </button>
-          <button type="button" className="secondary" onClick={handleNew}>
-            New sheet
           </button>
           {data && (
             <button type="button" className="primary" onClick={handleDownload}>
@@ -75,9 +72,6 @@ function App() {
             <div className="empty-actions">
               <button type="button" onClick={() => fileInputRef.current?.click()}>
                 Choose file
-              </button>
-              <button type="button" className="secondary" onClick={handleNew}>
-                Start blank
               </button>
             </div>
           </div>
