@@ -69,9 +69,25 @@ export function countRowsByColumn(
     }
   }
 
-  const counts = [...tally.entries()]
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => a.value.localeCompare(b.value))
+  const counts = [...tally.entries()].map(([value, count]) => ({ value, count }))
 
   return { total: rows.length, counts }
+}
+
+/** Unique values in a column, in the order they first appear. */
+export function getUniqueColumnValues(data: CsvData, columnName: string): string[] {
+  const headers = getCsvHeaders(data)
+  const colIndex = headers.indexOf(columnName)
+  if (colIndex < 0) return []
+
+  const seen = new Set<string>()
+  const values: string[] = []
+  for (const row of data.slice(1)) {
+    const value = (row[colIndex] ?? '').trim() || '(blank)'
+    if (!seen.has(value)) {
+      seen.add(value)
+      values.push(value)
+    }
+  }
+  return values
 }

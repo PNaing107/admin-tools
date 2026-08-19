@@ -6,6 +6,7 @@ import {
   downloadCsv,
   findMissingHeaders,
   getCsvHeaders,
+  getUniqueColumnValues,
   normalizeRows,
   parseCsv,
   type ColumnCount,
@@ -69,7 +70,7 @@ export default function StartlistGenerator() {
         return
       }
       const stats = countRowsByColumn(parsed, 'Category')
-      const categories = stats.counts.map((entry) => entry.value)
+      const categories = getUniqueColumnValues(parsed, 'Category')
       setData(parsed)
       setFileName(file.name.endsWith('.csv') ? file.name : `${file.name}.csv`)
       setUploadStats(stats)
@@ -96,6 +97,17 @@ export default function StartlistGenerator() {
 
   const updateSeedingOrder = useCallback((category: string, order: AthleteSeedingOrder) => {
     setSeedingOrders((current) => ({ ...current, [category]: order }))
+  }, [])
+
+  const moveCategory = useCallback((index: number, direction: -1 | 1) => {
+    setRaceCategories((current) => {
+      const nextIndex = index + direction
+      if (nextIndex < 0 || nextIndex >= current.length) return current
+      const reordered = [...current]
+      const [moved] = reordered.splice(index, 1)
+      reordered.splice(nextIndex, 0, moved)
+      return reordered
+    })
   }, [])
 
   return (
@@ -229,16 +241,46 @@ export default function StartlistGenerator() {
               closeSeedingModal()
             }}
           >
+            <p className="seeding-hint">
+              Use the arrows to set the order races start. This can differ from the order
+              categories appear in the CSV.
+            </p>
             <table className="seeding-table">
               <thead>
                 <tr>
+                  <th>Start order</th>
                   <th>Race Category</th>
                   <th>Athlete Seeding Order</th>
                 </tr>
               </thead>
               <tbody>
-                {raceCategories.map((category) => (
+                {raceCategories.map((category, index) => (
                   <tr key={category}>
+                    <td className="seeding-order-cell">
+                      <span className="seeding-order-number">{index + 1}</span>
+                      <div className="seeding-order-buttons">
+                        <button
+                          type="button"
+                          className="seeding-move-btn"
+                          onClick={() => moveCategory(index, -1)}
+                          disabled={index === 0}
+                          aria-label={`Move ${category} earlier in the start order`}
+                          title="Move up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className="seeding-move-btn"
+                          onClick={() => moveCategory(index, 1)}
+                          disabled={index === raceCategories.length - 1}
+                          aria-label={`Move ${category} later in the start order`}
+                          title="Move down"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </td>
                     <td>{category}</td>
                     <td>
                       <select
