@@ -49,6 +49,7 @@ export default function StartlistGenerator() {
   const [raceCategories, setRaceCategories] = useState<string[]>([])
   const [seedingOrders, setSeedingOrders] = useState<Record<string, AthleteSeedingOrder>>({})
   const [outOfSequenceBibs, setOutOfSequenceBibs] = useState<Record<string, string>>({})
+  const [firstRegularBibs, setFirstRegularBibs] = useState<Record<string, number | ''>>({})
 
   const handleFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -62,6 +63,7 @@ export default function StartlistGenerator() {
     setRaceCategories([])
     setSeedingOrders({})
     setOutOfSequenceBibs({})
+    setFirstRegularBibs({})
     try {
       const text = await file.text()
       const parsed = normalizeRows(await parseCsv(text))
@@ -81,6 +83,7 @@ export default function StartlistGenerator() {
         Object.fromEntries(categories.map((category) => [category, defaultSeedingOrder])),
       )
       setOutOfSequenceBibs(Object.fromEntries(categories.map((category) => [category, ''])))
+      setFirstRegularBibs(Object.fromEntries(categories.map((category) => [category, ''])))
       setCsvValidated(true)
     } catch {
       setError('Could not parse this file. Please upload a valid CSV.')
@@ -104,6 +107,17 @@ export default function StartlistGenerator() {
 
   const updateOutOfSequenceBibs = useCallback((category: string, value: string) => {
     setOutOfSequenceBibs((current) => ({ ...current, [category]: value }))
+  }, [])
+
+  const updateFirstRegularBib = useCallback((category: string, value: string) => {
+    if (value === '') {
+      setFirstRegularBibs((current) => ({ ...current, [category]: '' }))
+      return
+    }
+    const parsed = Number(value)
+    if (Number.isInteger(parsed) && parsed >= 0) {
+      setFirstRegularBibs((current) => ({ ...current, [category]: parsed }))
+    }
   }, [])
 
   const moveCategory = useCallback((index: number, direction: -1 | 1) => {
@@ -259,6 +273,7 @@ export default function StartlistGenerator() {
                   <th>Race Category</th>
                   <th>Athlete Seeding Order</th>
                   <th>Out of Sequence Bib Numbers</th>
+                  <th>First Regular Sequence Bib Number</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,6 +326,17 @@ export default function StartlistGenerator() {
                         value={outOfSequenceBibs[category] ?? ''}
                         onChange={(event) => updateOutOfSequenceBibs(category, event.target.value)}
                         aria-label={`Out of sequence bib numbers for ${category}`}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        step={1}
+                        min={0}
+                        value={firstRegularBibs[category] ?? ''}
+                        onChange={(event) => updateFirstRegularBib(category, event.target.value)}
+                        aria-label={`First regular sequence bib number for ${category}`}
                       />
                     </td>
                   </tr>

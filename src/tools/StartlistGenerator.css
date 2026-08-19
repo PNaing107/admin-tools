@@ -141,7 +141,7 @@
 }
 
 .alert-modal--wide {
-  width: min(56rem, calc(100vw - 2rem));
+  width: min(68rem, calc(100vw - 2rem));
 }
 
 .alert-modal p {
@@ -314,9 +314,10 @@
 }
 
 .seeding-table select,
-.seeding-table input[type='text'] {
+.seeding-table input[type='text'],
+.seeding-table input[type='number'] {
   width: 100%;
-  min-width: 10rem;
+  min-width: 8rem;
   border: 1px solid #c8d0e0;
   border-radius: 6px;
   padding: 0.45rem 0.6rem;
@@ -325,7 +326,8 @@
 }
 
 .seeding-table select:focus,
-.seeding-table input[type='text']:focus {
+.seeding-table input[type='text']:focus,
+.seeding-table input[type='number']:focus {
   outline: none;
   background: #fff;
   border-color: #3d5af1;
