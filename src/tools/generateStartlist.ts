@@ -181,11 +181,12 @@ export function assignRaceStartTimes(
       settings.gapBetweenRaceCategoriesInMinutes,
       settings.averageSwimTimeInMinutes,
     )
-    const categoryStart =
+    const categoryStart: number =
       lastWaveStart === null ? swimStart : lastWaveStart + delayToNextCategory
 
     for (let i = 0; i < indices.length; i++) {
-      const waveStart = categoryStart + Math.floor(i / capacity) * settings.averageSwimTimeInMinutes
+      const waveStart: number =
+        categoryStart + Math.floor(i / capacity) * settings.averageSwimTimeInMinutes
       times[indices[i]] = formatMinutesAsClock(waveStart)
       lastWaveStart = waveStart
     }
