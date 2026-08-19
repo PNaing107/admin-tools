@@ -22,12 +22,12 @@ export interface StartlistSettings {
 
 export const defaultStartlistSettings: StartlistSettings = {
   ageCategory: 'Senior',
-  registrationStartTime: '',
-  registrationEndTime: '',
+  registrationStartTime: '06:30',
+  registrationEndTime: '07:45',
   registrationSlots: 1,
   swimLanes: 1,
   swimmersPerLane: 2,
-  swimStartTime: '',
+  swimStartTime: '08:00',
   averageSwimTimeInMinutes: 9,
   bikesPerRack: 5,
 }
