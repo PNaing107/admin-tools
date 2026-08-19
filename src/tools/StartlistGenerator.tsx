@@ -106,9 +106,11 @@ export default function StartlistGenerator() {
       raceCategories,
       seedingOrders,
       settings,
+      outOfSequenceBibs,
+      firstRegularBibs,
     )
     downloadCsv(processed, startlistDownloadFilename(fileName, settings.ageCategory))
-  }, [data, fileName, raceCategories, seedingOrders, settings])
+  }, [data, fileName, firstRegularBibs, outOfSequenceBibs, raceCategories, seedingOrders, settings])
 
   const closeMissingHeadersModal = useCallback(() => setMissingHeaders(null), [])
   const closeUploadStatsModal = useCallback(() => setUploadStats(null), [])

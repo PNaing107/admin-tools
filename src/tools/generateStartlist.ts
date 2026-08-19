@@ -22,6 +22,7 @@ const FULL_NAME_COLUMN = 'Full Name'
 const REGISTRATION_SLOT_COLUMN = 'Registration Slot'
 const RACE_START_TIME_COLUMN = 'Race Start Time'
 const RACKING_NUMBER_COLUMN = 'Racking Number'
+const RACE_NUMBER_COLUMN = 'Race Number'
 
 function normalizeTimeCell(time: string): string {
   return time
@@ -204,19 +205,77 @@ export function addRackingNumberColumn(data: CsvData, settings: StartlistSetting
   return [headerRow, ...rows.map((row, index) => [...row, numbers[index] ?? ''])]
 }
 
+export function parseOutOfSequenceBibs(value: string): number[] {
+  const bibs: number[] = []
+  for (const part of value.split(',')) {
+    const trimmed = part.trim()
+    if (!trimmed) continue
+    const parsed = Number(trimmed)
+    if (Number.isInteger(parsed) && parsed >= 0) bibs.push(parsed)
+  }
+  return bibs
+}
+
+export function assignRaceNumbers(
+  rows: string[][],
+  categoryIndex: number,
+  outOfSequenceBibs: Record<string, string>,
+  firstRegularBibs: Record<string, number | ''>,
+): string[] {
+  const numbers = rows.map(() => '')
+
+  for (const indices of groupConsecutiveCategoryIndices(rows, categoryIndex)) {
+    const category = categoryValue(rows[indices[0]], categoryIndex)
+    const reserved = parseOutOfSequenceBibs(outOfSequenceBibs[category] ?? '')
+    const firstRegular = firstRegularBibs[category]
+    let nextRegular: number | null = typeof firstRegular === 'number' ? firstRegular : null
+
+    for (let i = 0; i < indices.length; i++) {
+      if (i < reserved.length) {
+        numbers[indices[i]] = String(reserved[i])
+        continue
+      }
+      if (nextRegular === null) continue
+      numbers[indices[i]] = String(nextRegular)
+      nextRegular += 1
+    }
+  }
+
+  return numbers
+}
+
+export function addRaceNumberColumn(
+  data: CsvData,
+  outOfSequenceBibs: Record<string, string>,
+  firstRegularBibs: Record<string, number | ''>,
+): CsvData {
+  const headerRow = [...(data[0] ?? []), RACE_NUMBER_COLUMN]
+  const rows = data.slice(1)
+  const numbers = assignRaceNumbers(
+    rows,
+    getCsvHeaders(data).indexOf(CATEGORY_COLUMN),
+    outOfSequenceBibs,
+    firstRegularBibs,
+  )
+  return [headerRow, ...rows.map((row, index) => [...row, numbers[index] ?? ''])]
+}
+
 export function buildStartlistCsv(
   data: CsvData,
   requiredColumns: readonly string[],
   categoryOrder: string[],
   seedingOrders: Record<string, AthleteSeedingOrder>,
   settings: StartlistSettings,
+  outOfSequenceBibs: Record<string, string>,
+  firstRegularBibs: Record<string, number | ''>,
 ): CsvData {
   const kept = keepColumns(data, requiredColumns)
   const withFullName = addFullNameColumn(kept)
   const sorted = sortStartlistRows(withFullName, categoryOrder, seedingOrders)
   const withSlots = addRegistrationSlotColumn(sorted, settings)
   const withStartTimes = addRaceStartTimeColumn(withSlots, settings)
-  return addRackingNumberColumn(withStartTimes, settings)
+  const withRacks = addRackingNumberColumn(withStartTimes, settings)
+  return addRaceNumberColumn(withRacks, outOfSequenceBibs, firstRegularBibs)
 }
 
 export function formatStartlistTimestamp(date: Date): string {
