@@ -21,6 +21,7 @@ const TIME_COLUMN = 'Time (mm:ss)'
 const FULL_NAME_COLUMN = 'Full Name'
 const REGISTRATION_SLOT_COLUMN = 'Registration Slot'
 const RACE_START_TIME_COLUMN = 'Race Start Time'
+const RACKING_NUMBER_COLUMN = 'Racking Number'
 
 function normalizeTimeCell(time: string): string {
   return time
@@ -192,6 +193,17 @@ export function assignRaceStartTimes(
   return times
 }
 
+export function addRackingNumberColumn(data: CsvData, settings: StartlistSettings): CsvData {
+  const headerRow = [...(data[0] ?? []), RACKING_NUMBER_COLUMN]
+  const rows = data.slice(1)
+  const bikesPerRack = settings.bikesPerRack
+  const numbers =
+    bikesPerRack > 0
+      ? rows.map((_, index) => String(Math.floor(index / bikesPerRack) + 1))
+      : rows.map(() => '')
+  return [headerRow, ...rows.map((row, index) => [...row, numbers[index] ?? ''])]
+}
+
 export function buildStartlistCsv(
   data: CsvData,
   requiredColumns: readonly string[],
@@ -203,7 +215,8 @@ export function buildStartlistCsv(
   const withFullName = addFullNameColumn(kept)
   const sorted = sortStartlistRows(withFullName, categoryOrder, seedingOrders)
   const withSlots = addRegistrationSlotColumn(sorted, settings)
-  return addRaceStartTimeColumn(withSlots, settings)
+  const withStartTimes = addRaceStartTimeColumn(withSlots, settings)
+  return addRackingNumberColumn(withStartTimes, settings)
 }
 
 export function formatStartlistTimestamp(date: Date): string {
