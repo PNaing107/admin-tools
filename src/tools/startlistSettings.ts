@@ -1,4 +1,12 @@
 export type AgeCategory = 'Senior' | 'Junior'
+export type AthleteSeedingOrder = 'fastest-to-slowest' | 'slowest-to-fastest'
+
+export const SEEDING_ORDER_OPTIONS: { value: AthleteSeedingOrder; label: string }[] = [
+  { value: 'fastest-to-slowest', label: 'Fastest to Slowest' },
+  { value: 'slowest-to-fastest', label: 'Slowest to Fastest' },
+]
+
+export const defaultSeedingOrder: AthleteSeedingOrder = 'fastest-to-slowest'
 
 export interface StartlistSettings {
   ageCategory: AgeCategory

@@ -12,10 +12,13 @@ import {
   type CsvData,
 } from '../utils/csv'
 import {
+  defaultSeedingOrder,
   defaultStartlistSettings,
   getAverageEntrantsPerSlot,
   getBikeRacksNeeded,
   getRegistrationSlotDurationMinutes,
+  SEEDING_ORDER_OPTIONS,
+  type AthleteSeedingOrder,
   type StartlistSettings,
 } from './startlistSettings'
 import { StartlistSettingsForm } from './StartlistSettingsForm'
@@ -40,6 +43,10 @@ export default function StartlistGenerator() {
   const [uploadStats, setUploadStats] = useState<{ total: number; counts: ColumnCount[] } | null>(
     null,
   )
+  const [csvValidated, setCsvValidated] = useState(false)
+  const [showSeedingModal, setShowSeedingModal] = useState(false)
+  const [raceCategories, setRaceCategories] = useState<string[]>([])
+  const [seedingOrders, setSeedingOrders] = useState<Record<string, AthleteSeedingOrder>>({})
 
   const handleFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -48,6 +55,10 @@ export default function StartlistGenerator() {
     setError(null)
     setMissingHeaders(null)
     setUploadStats(null)
+    setCsvValidated(false)
+    setShowSeedingModal(false)
+    setRaceCategories([])
+    setSeedingOrders({})
     try {
       const text = await file.text()
       const parsed = normalizeRows(await parseCsv(text))
@@ -57,9 +68,16 @@ export default function StartlistGenerator() {
         setData(null)
         return
       }
+      const stats = countRowsByColumn(parsed, 'Category')
+      const categories = stats.counts.map((entry) => entry.value)
       setData(parsed)
       setFileName(file.name.endsWith('.csv') ? file.name : `${file.name}.csv`)
-      setUploadStats(countRowsByColumn(parsed, 'Category'))
+      setUploadStats(stats)
+      setRaceCategories(categories)
+      setSeedingOrders(
+        Object.fromEntries(categories.map((category) => [category, defaultSeedingOrder])),
+      )
+      setCsvValidated(true)
     } catch {
       setError('Could not parse this file. Please upload a valid CSV.')
       setData(null)
@@ -74,6 +92,11 @@ export default function StartlistGenerator() {
 
   const closeMissingHeadersModal = useCallback(() => setMissingHeaders(null), [])
   const closeUploadStatsModal = useCallback(() => setUploadStats(null), [])
+  const closeSeedingModal = useCallback(() => setShowSeedingModal(false), [])
+
+  const updateSeedingOrder = useCallback((category: string, order: AthleteSeedingOrder) => {
+    setSeedingOrders((current) => ({ ...current, [category]: order }))
+  }, [])
 
   return (
     <div className="tool-page">
@@ -97,7 +120,7 @@ export default function StartlistGenerator() {
             Upload CSV
           </button>
           {data && (
-            <button type="button" className="primary" onClick={handleDownload}>
+            <button type="button" onClick={handleDownload}>
               Download CSV
             </button>
           )}
@@ -106,6 +129,14 @@ export default function StartlistGenerator() {
 
       <main className="tool-main">
         <StartlistSettingsForm settings={settings} onChange={setSettings} />
+
+        {data && csvValidated && !uploadStats && (
+          <div className="generate-actions">
+            <button type="button" className="primary" onClick={() => setShowSeedingModal(true)}>
+              Generate Startlist
+            </button>
+          </div>
+        )}
 
         {error && <p className="error">{error}</p>}
 
@@ -183,6 +214,54 @@ export default function StartlistGenerator() {
           )}
         </AlertModal>
       )}
+
+      {showSeedingModal && (
+        <AlertModal
+          title="Generate Startlist"
+          variant="default"
+          wide
+          onClose={closeSeedingModal}
+        >
+          <form
+            className="seeding-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              closeSeedingModal()
+            }}
+          >
+            <table className="seeding-table">
+              <thead>
+                <tr>
+                  <th>Race Category</th>
+                  <th>Athlete Seeding Order</th>
+                </tr>
+              </thead>
+              <tbody>
+                {raceCategories.map((category) => (
+                  <tr key={category}>
+                    <td>{category}</td>
+                    <td>
+                      <select
+                        value={seedingOrders[category] ?? defaultSeedingOrder}
+                        onChange={(event) =>
+                          updateSeedingOrder(category, event.target.value as AthleteSeedingOrder)
+                        }
+                        aria-label={`Athlete seeding order for ${category}`}
+                      >
+                        {SEEDING_ORDER_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </form>
+        </AlertModal>
+      )}
     </div>
   )
 }
@@ -197,11 +276,13 @@ function AlertModal({
   children,
   onClose,
   variant = 'error',
+  wide = false,
 }: {
   title: string
   children: ReactNode
   onClose: () => void
-  variant?: 'error' | 'success'
+  variant?: 'error' | 'success' | 'default'
+  wide?: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -218,7 +299,7 @@ function AlertModal({
   return (
     <dialog
       ref={dialogRef}
-      className={`alert-modal alert-modal--${variant}`}
+      className={`alert-modal alert-modal--${variant}${wide ? ' alert-modal--wide' : ''}`}
       aria-labelledby="alert-modal-title"
       onClick={(event) => {
         if (event.target === dialogRef.current) dialogRef.current.close()
@@ -226,11 +307,9 @@ function AlertModal({
     >
       <h2 id="alert-modal-title">{title}</h2>
       {children}
-      <form method="dialog">
-        <button type="submit" className="alert-modal-ok">
-          OK
-        </button>
-      </form>
+      <button type="button" className="alert-modal-ok" onClick={() => dialogRef.current?.close()}>
+        OK
+      </button>
     </dialog>
   )
 }

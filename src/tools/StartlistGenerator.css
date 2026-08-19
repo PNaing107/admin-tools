@@ -45,7 +45,8 @@
 }
 
 .toolbar button,
-.empty-actions button {
+.empty-actions button,
+.generate-actions button {
   border: 1px solid #c8d0e0;
   border-radius: 8px;
   padding: 0.5rem 1rem;
@@ -55,18 +56,21 @@
 }
 
 .toolbar button:hover,
-.empty-actions button:hover {
+.empty-actions button:hover,
+.generate-actions button:hover {
   background: #eef2f9;
   border-color: #9aa8c4;
 }
 
-.toolbar button.primary {
+.toolbar button.primary,
+.generate-actions button.primary {
   background: #3d5af1;
   border-color: #3d5af1;
   color: #fff;
 }
 
-.toolbar button.primary:hover {
+.toolbar button.primary:hover,
+.generate-actions button.primary:hover {
   background: #2f49d4;
   border-color: #2f49d4;
 }
@@ -100,6 +104,10 @@
   min-height: 400px;
 }
 
+.generate-actions {
+  margin: -1rem 0 2rem;
+}
+
 .alert-modal {
   width: min(32rem, calc(100vw - 2rem));
   padding: 1.5rem;
@@ -126,6 +134,14 @@
 
 .alert-modal--success h2 {
   color: #166534;
+}
+
+.alert-modal--default h2 {
+  color: #16213e;
+}
+
+.alert-modal--wide {
+  width: min(40rem, calc(100vw - 2rem));
 }
 
 .alert-modal p {
@@ -195,4 +211,49 @@
 .alert-modal-ok:hover {
   background: #2f49d4;
   border-color: #2f49d4;
+}
+
+.seeding-form {
+  margin: 0 0 1.25rem;
+}
+
+.seeding-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.seeding-table th,
+.seeding-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #dde3ef;
+  vertical-align: middle;
+}
+
+.seeding-table th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a849c;
+  background: #f4f6fb;
+}
+
+.seeding-table td {
+  color: #16213e;
+}
+
+.seeding-table select {
+  width: 100%;
+  border: 1px solid #c8d0e0;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  background: #fff;
+  color: #1a1a2e;
+}
+
+.seeding-table select:focus {
+  outline: none;
+  border-color: #3d5af1;
+  box-shadow: 0 0 0 2px rgb(61 90 241 / 15%);
 }
