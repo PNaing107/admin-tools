@@ -141,7 +141,7 @@
 }
 
 .alert-modal--wide {
-  width: min(44rem, calc(100vw - 2rem));
+  width: min(56rem, calc(100vw - 2rem));
 }
 
 .alert-modal p {
@@ -313,8 +313,10 @@
   color: #16213e;
 }
 
-.seeding-table select {
+.seeding-table select,
+.seeding-table input[type='text'] {
   width: 100%;
+  min-width: 10rem;
   border: 1px solid #c8d0e0;
   border-radius: 6px;
   padding: 0.45rem 0.6rem;
@@ -322,8 +324,10 @@
   color: #1a1a2e;
 }
 
-.seeding-table select:focus {
+.seeding-table select:focus,
+.seeding-table input[type='text']:focus {
   outline: none;
+  background: #fff;
   border-color: #3d5af1;
   box-shadow: 0 0 0 2px rgb(61 90 241 / 15%);
 }

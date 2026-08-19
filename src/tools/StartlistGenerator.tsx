@@ -48,6 +48,7 @@ export default function StartlistGenerator() {
   const [showSeedingModal, setShowSeedingModal] = useState(false)
   const [raceCategories, setRaceCategories] = useState<string[]>([])
   const [seedingOrders, setSeedingOrders] = useState<Record<string, AthleteSeedingOrder>>({})
+  const [outOfSequenceBibs, setOutOfSequenceBibs] = useState<Record<string, string>>({})
 
   const handleFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -60,6 +61,7 @@ export default function StartlistGenerator() {
     setShowSeedingModal(false)
     setRaceCategories([])
     setSeedingOrders({})
+    setOutOfSequenceBibs({})
     try {
       const text = await file.text()
       const parsed = normalizeRows(await parseCsv(text))
@@ -78,6 +80,7 @@ export default function StartlistGenerator() {
       setSeedingOrders(
         Object.fromEntries(categories.map((category) => [category, defaultSeedingOrder])),
       )
+      setOutOfSequenceBibs(Object.fromEntries(categories.map((category) => [category, ''])))
       setCsvValidated(true)
     } catch {
       setError('Could not parse this file. Please upload a valid CSV.')
@@ -97,6 +100,10 @@ export default function StartlistGenerator() {
 
   const updateSeedingOrder = useCallback((category: string, order: AthleteSeedingOrder) => {
     setSeedingOrders((current) => ({ ...current, [category]: order }))
+  }, [])
+
+  const updateOutOfSequenceBibs = useCallback((category: string, value: string) => {
+    setOutOfSequenceBibs((current) => ({ ...current, [category]: value }))
   }, [])
 
   const moveCategory = useCallback((index: number, direction: -1 | 1) => {
@@ -251,6 +258,7 @@ export default function StartlistGenerator() {
                   <th>Start order</th>
                   <th>Race Category</th>
                   <th>Athlete Seeding Order</th>
+                  <th>Out of Sequence Bib Numbers</th>
                 </tr>
               </thead>
               <tbody>
@@ -296,6 +304,14 @@ export default function StartlistGenerator() {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={outOfSequenceBibs[category] ?? ''}
+                        onChange={(event) => updateOutOfSequenceBibs(category, event.target.value)}
+                        aria-label={`Out of sequence bib numbers for ${category}`}
+                      />
                     </td>
                   </tr>
                 ))}
