@@ -12,6 +12,7 @@ import {
   type ColumnCount,
   type CsvData,
 } from '../utils/csv'
+import { buildStartlistCsv, startlistDownloadFilename } from './generateStartlist'
 import {
   defaultSeedingOrder,
   defaultStartlistSettings,
@@ -96,6 +97,12 @@ export default function StartlistGenerator() {
   const handleDownload = useCallback(() => {
     if (data) downloadCsv(data, fileName)
   }, [data, fileName])
+
+  const handleGenerateStartlist = useCallback(() => {
+    if (!data) return
+    const processed = buildStartlistCsv(data, REQUIRED_STARTLIST_HEADERS, raceCategories, seedingOrders)
+    downloadCsv(processed, startlistDownloadFilename(fileName, settings.ageCategory))
+  }, [data, fileName, raceCategories, seedingOrders, settings.ageCategory])
 
   const closeMissingHeadersModal = useCallback(() => setMissingHeaders(null), [])
   const closeUploadStatsModal = useCallback(() => setUploadStats(null), [])
@@ -254,11 +261,13 @@ export default function StartlistGenerator() {
           variant="default"
           wide
           onClose={closeSeedingModal}
+          onConfirm={handleGenerateStartlist}
         >
           <form
             className="seeding-form"
             onSubmit={(event) => {
               event.preventDefault()
+              handleGenerateStartlist()
               closeSeedingModal()
             }}
           >
@@ -359,12 +368,14 @@ function AlertModal({
   title,
   children,
   onClose,
+  onConfirm,
   variant = 'error',
   wide = false,
 }: {
   title: string
   children: ReactNode
   onClose: () => void
+  onConfirm?: () => void
   variant?: 'error' | 'success' | 'default'
   wide?: boolean
 }) {
@@ -391,7 +402,14 @@ function AlertModal({
     >
       <h2 id="alert-modal-title">{title}</h2>
       {children}
-      <button type="button" className="alert-modal-ok" onClick={() => dialogRef.current?.close()}>
+      <button
+        type="button"
+        className="alert-modal-ok"
+        onClick={() => {
+          onConfirm?.()
+          dialogRef.current?.close()
+        }}
+      >
         OK
       </button>
     </dialog>
