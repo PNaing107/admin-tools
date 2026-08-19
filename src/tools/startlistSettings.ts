@@ -17,6 +17,7 @@ export interface StartlistSettings {
   swimmersPerLane: number
   swimStartTime: string
   averageSwimTimeInMinutes: number
+  gapBetweenRaceCategoriesInMinutes: number
   bikesPerRack: number
 }
 
@@ -29,6 +30,7 @@ export const defaultStartlistSettings: StartlistSettings = {
   swimmersPerLane: 2,
   swimStartTime: '08:00',
   averageSwimTimeInMinutes: 9,
+  gapBetweenRaceCategoriesInMinutes: 10,
   bikesPerRack: 5,
 }
 

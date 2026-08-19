@@ -112,6 +112,17 @@ export function StartlistSettingsForm({ settings, onChange }: StartlistSettingsF
               onChange={handleNumberChange('averageSwimTimeInMinutes')}
             />
           </label>
+          <label className="settings-field">
+            <span>Gap Between Each Race Category (minutes)</span>
+            <input
+              type="number"
+              min={0}
+              max={60}
+              step={1}
+              value={settings.gapBetweenRaceCategoriesInMinutes}
+              onChange={handleNumberChange('gapBetweenRaceCategoriesInMinutes')}
+            />
+          </label>
         </div>
       </fieldset>
 
