@@ -102,6 +102,12 @@ export function getAverageEntrantsPerSlot(
   return Math.ceil(totalEntrants / registrationSlots)
 }
 
+/** How many swimmers can be in the pool at once. */
+export function getSwimmersInPoolAtOnce(settings: StartlistSettings): number | null {
+  if (settings.swimLanes <= 0 || settings.swimmersPerLane <= 0) return null
+  return settings.swimLanes * settings.swimmersPerLane
+}
+
 /** Bike racks needed, always rounded up. */
 export function getBikeRacksNeeded(totalEntrants: number, bikesPerRack: number): number | null {
   if (bikesPerRack <= 0) return null

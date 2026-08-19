@@ -5,7 +5,10 @@ import {
 } from '../utils/csv'
 import {
   defaultSeedingOrder,
+  formatMinutesAsClock,
   getRegistrationSlotWindows,
+  getSwimmersInPoolAtOnce,
+  parseTimeToMinutes,
   type AgeCategory,
   type AthleteSeedingOrder,
   type StartlistSettings,
@@ -17,6 +20,7 @@ const LAST_NAME_COLUMN = 'Last Name'
 const TIME_COLUMN = 'Time (mm:ss)'
 const FULL_NAME_COLUMN = 'Full Name'
 const REGISTRATION_SLOT_COLUMN = 'Registration Slot'
+const RACE_START_TIME_COLUMN = 'Race Start Time'
 
 function normalizeTimeCell(time: string): string {
   return time
@@ -134,6 +138,60 @@ export function addRegistrationSlotColumn(data: CsvData, settings: StartlistSett
   return [headerRow, ...rows.map((row, index) => [...row, slots[index] ?? ''])]
 }
 
+function groupConsecutiveCategoryIndices(rows: string[][], categoryIndex: number): number[][] {
+  const groups: number[][] = []
+  for (let i = 0; i < rows.length; i++) {
+    const category = categoryValue(rows[i], categoryIndex)
+    const current = groups[groups.length - 1]
+    const previousCategory =
+      current && current.length > 0 ? categoryValue(rows[current[0]], categoryIndex) : null
+    if (current && previousCategory === category) {
+      current.push(i)
+    } else {
+      groups.push([i])
+    }
+  }
+  return groups
+}
+
+export function addRaceStartTimeColumn(data: CsvData, settings: StartlistSettings): CsvData {
+  const headerRow = [...(data[0] ?? []), RACE_START_TIME_COLUMN]
+  const rows = data.slice(1)
+  const times = assignRaceStartTimes(rows, getCsvHeaders(data).indexOf(CATEGORY_COLUMN), settings)
+  return [headerRow, ...rows.map((row, index) => [...row, times[index] ?? ''])]
+}
+
+export function assignRaceStartTimes(
+  rows: string[][],
+  categoryIndex: number,
+  settings: StartlistSettings,
+): string[] {
+  const times = rows.map(() => '')
+  const capacity = getSwimmersInPoolAtOnce(settings)
+  const swimStart = parseTimeToMinutes(settings.swimStartTime)
+  if (capacity === null || swimStart === null || settings.averageSwimTimeInMinutes < 0) {
+    return times
+  }
+
+  let lastWaveStart: number | null = null
+  for (const indices of groupConsecutiveCategoryIndices(rows, categoryIndex)) {
+    const delayToNextCategory = Math.max(
+      settings.gapBetweenRaceCategoriesInMinutes,
+      settings.averageSwimTimeInMinutes,
+    )
+    const categoryStart =
+      lastWaveStart === null ? swimStart : lastWaveStart + delayToNextCategory
+
+    for (let i = 0; i < indices.length; i++) {
+      const waveStart = categoryStart + Math.floor(i / capacity) * settings.averageSwimTimeInMinutes
+      times[indices[i]] = formatMinutesAsClock(waveStart)
+      lastWaveStart = waveStart
+    }
+  }
+
+  return times
+}
+
 export function buildStartlistCsv(
   data: CsvData,
   requiredColumns: readonly string[],
@@ -144,7 +202,8 @@ export function buildStartlistCsv(
   const kept = keepColumns(data, requiredColumns)
   const withFullName = addFullNameColumn(kept)
   const sorted = sortStartlistRows(withFullName, categoryOrder, seedingOrders)
-  return addRegistrationSlotColumn(sorted, settings)
+  const withSlots = addRegistrationSlotColumn(sorted, settings)
+  return addRaceStartTimeColumn(withSlots, settings)
 }
 
 export function formatStartlistTimestamp(date: Date): string {
