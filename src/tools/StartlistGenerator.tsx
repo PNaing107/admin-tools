@@ -146,6 +146,13 @@ export default function StartlistGenerator() {
     })
   }, [])
 
+  const athleteCountByCategory = Object.fromEntries(
+    (data ? countRowsByColumn(data, 'Category').counts : []).map(({ value, count }) => [
+      value,
+      count,
+    ]),
+  )
+
   return (
     <div className="tool-page">
       <header className="tool-header">
@@ -321,7 +328,9 @@ export default function StartlistGenerator() {
                         </button>
                       </div>
                     </td>
-                    <td>{category}</td>
+                    <td>
+                      {category} ({athleteCountByCategory[category] ?? 0})
+                    </td>
                     <td>
                       <select
                         value={seedingOrders[category] ?? defaultSeedingOrder}
