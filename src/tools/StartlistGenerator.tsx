@@ -100,9 +100,15 @@ export default function StartlistGenerator() {
 
   const handleGenerateStartlist = useCallback(() => {
     if (!data) return
-    const processed = buildStartlistCsv(data, REQUIRED_STARTLIST_HEADERS, raceCategories, seedingOrders)
+    const processed = buildStartlistCsv(
+      data,
+      REQUIRED_STARTLIST_HEADERS,
+      raceCategories,
+      seedingOrders,
+      settings,
+    )
     downloadCsv(processed, startlistDownloadFilename(fileName, settings.ageCategory))
-  }, [data, fileName, raceCategories, seedingOrders, settings.ageCategory])
+  }, [data, fileName, raceCategories, seedingOrders, settings])
 
   const closeMissingHeadersModal = useCallback(() => setMissingHeaders(null), [])
   const closeUploadStatsModal = useCallback(() => setUploadStats(null), [])

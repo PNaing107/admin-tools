@@ -3,13 +3,20 @@ import {
   keepColumns,
   type CsvData,
 } from '../utils/csv'
-import { defaultSeedingOrder, type AgeCategory, type AthleteSeedingOrder } from './startlistSettings'
+import {
+  defaultSeedingOrder,
+  getRegistrationSlotWindows,
+  type AgeCategory,
+  type AthleteSeedingOrder,
+  type StartlistSettings,
+} from './startlistSettings'
 
 const CATEGORY_COLUMN = 'Category'
 const FIRST_NAME_COLUMN = 'First Name'
 const LAST_NAME_COLUMN = 'Last Name'
 const TIME_COLUMN = 'Time (mm:ss)'
 const FULL_NAME_COLUMN = 'Full Name'
+const REGISTRATION_SLOT_COLUMN = 'Registration Slot'
 
 function normalizeTimeCell(time: string): string {
   return time
@@ -107,15 +114,37 @@ export function sortStartlistRows(
   return [headerRow, ...sortedRows]
 }
 
+function assignEvenlyToSlots(count: number, windows: string[]): string[] {
+  if (count === 0 || windows.length === 0) return Array(count).fill('')
+  const base = Math.floor(count / windows.length)
+  const remainder = count % windows.length
+  const assigned: string[] = []
+  for (let slot = 0; slot < windows.length; slot++) {
+    const size = base + (slot < remainder ? 1 : 0)
+    for (let i = 0; i < size; i++) assigned.push(windows[slot])
+  }
+  return assigned
+}
+
+export function addRegistrationSlotColumn(data: CsvData, settings: StartlistSettings): CsvData {
+  const windows = getRegistrationSlotWindows(settings)
+  const headerRow = [...(data[0] ?? []), REGISTRATION_SLOT_COLUMN]
+  const rows = data.slice(1)
+  const slots = windows ? assignEvenlyToSlots(rows.length, windows) : rows.map(() => '')
+  return [headerRow, ...rows.map((row, index) => [...row, slots[index] ?? ''])]
+}
+
 export function buildStartlistCsv(
   data: CsvData,
   requiredColumns: readonly string[],
   categoryOrder: string[],
   seedingOrders: Record<string, AthleteSeedingOrder>,
+  settings: StartlistSettings,
 ): CsvData {
   const kept = keepColumns(data, requiredColumns)
   const withFullName = addFullNameColumn(kept)
-  return sortStartlistRows(withFullName, categoryOrder, seedingOrders)
+  const sorted = sortStartlistRows(withFullName, categoryOrder, seedingOrders)
+  return addRegistrationSlotColumn(sorted, settings)
 }
 
 export function formatStartlistTimestamp(date: Date): string {

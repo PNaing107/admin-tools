@@ -24,8 +24,8 @@ export const defaultStartlistSettings: StartlistSettings = {
   ageCategory: 'Senior',
   registrationStartTime: '06:30',
   registrationEndTime: '07:45',
-  registrationSlots: 1,
-  swimLanes: 1,
+  registrationSlots: 5,
+  swimLanes: 4,
   swimmersPerLane: 2,
   swimStartTime: '08:00',
   averageSwimTimeInMinutes: 9,
@@ -43,6 +43,36 @@ export function parseTimeToMinutes(time: string): number | null {
   if (hours > 23 || minutes > 59 || seconds > 59) return null
 
   return hours * 60 + minutes + seconds / 60
+}
+
+/** Formats minutes from midnight as a padded `HH:MM` clock time. */
+export function formatMinutesAsClock(totalMinutes: number): string {
+  const rounded = Math.round(totalMinutes)
+  const wrapped = ((rounded % (24 * 60)) + 24 * 60) % (24 * 60)
+  const hours = Math.floor(wrapped / 60)
+  const minutes = wrapped % 60
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
+/**
+ * Registration slot windows from opening time to closing time, e.g. `06:30 - 06:45`.
+ * Uses the same slot duration as the upload-stats modal. The final window always ends at closing time.
+ */
+export function getRegistrationSlotWindows(settings: StartlistSettings): string[] | null {
+  const start = parseTimeToMinutes(settings.registrationStartTime)
+  const end = parseTimeToMinutes(settings.registrationEndTime)
+  const duration = getRegistrationSlotDurationMinutes(settings)
+  if (start === null || end === null || duration === null || settings.registrationSlots <= 0) {
+    return null
+  }
+
+  const windows: string[] = []
+  for (let i = 0; i < settings.registrationSlots; i++) {
+    const slotStart = start + i * duration
+    const slotEnd = i === settings.registrationSlots - 1 ? end : start + (i + 1) * duration
+    windows.push(`${formatMinutesAsClock(slotStart)} - ${formatMinutesAsClock(slotEnd)}`)
+  }
+  return windows
 }
 
 /**
