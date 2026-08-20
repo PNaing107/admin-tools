@@ -31,6 +31,8 @@ import './StartlistGenerator.css'
 export const SENIOR_RACE_CATEGORY_HEADER =
   'Please select the race category being entered. Only people who are female sex at birth are eligible to compete in the Female category. All individuals including transgender people are eligible to compete in the Open category.'
 
+export const JUNIOR_GENDER_HEADER = 'Gender'
+
 export const REQUIRED_STARTLIST_HEADERS = [
   'Ref',
   'First Name',
@@ -43,11 +45,15 @@ export const REQUIRED_STARTLIST_HEADERS = [
 ] as const
 
 export function getRequiredStartlistHeaders(ageCategory: AgeCategory): readonly string[] {
-  if (ageCategory !== 'Senior') return REQUIRED_STARTLIST_HEADERS
-
   const headers: string[] = [...REQUIRED_STARTLIST_HEADERS]
-  const categoryIndex = headers.indexOf('Category')
-  headers.splice(categoryIndex + 1, 0, SENIOR_RACE_CATEGORY_HEADER)
+  if (ageCategory === 'Senior') {
+    const categoryIndex = headers.indexOf('Category')
+    headers.splice(categoryIndex + 1, 0, SENIOR_RACE_CATEGORY_HEADER)
+    return headers
+  }
+
+  const lastNameIndex = headers.indexOf('Last Name')
+  headers.splice(lastNameIndex + 1, 0, JUNIOR_GENDER_HEADER)
   return headers
 }
 
