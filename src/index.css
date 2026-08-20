@@ -1,9 +1,32 @@
 :root {
+  color-scheme: dark;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1a1a2e;
-  background-color: #f4f6fb;
+  --color-bg: #000;
+  --color-surface: #000;
+  --color-surface-raised: #0a0a0a;
+  --color-surface-hover: #141414;
+  --color-border: #3d303a;
+  --color-border-strong: #564550;
+  --color-text: var(--color-accent);
+  --color-text-muted: rgb(250 38 160 / 75%);
+  --color-text-subtle: rgb(250 38 160 / 55%);
+  --color-heading: var(--color-accent);
+  --color-accent: #fa26a0;
+  --color-accent-hover: #ff4db3;
+  --color-accent-muted: rgb(250 38 160 / 18%);
+  --color-accent-glow: rgb(250 38 160 / 32%);
+  --color-on-accent: #fff;
+  --color-error-bg: #3a151c;
+  --color-error-text: #ffb4c4;
+  --color-error-border: #7a2a3e;
+  --color-success: #4ade80;
+  --color-success-bg: #14261c;
+  --color-success-border: #1f5a38;
+  --shadow: 0 1px 3px rgb(0 0 0 / 40%);
+  color: var(--color-text);
+  background-color: var(--color-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -20,6 +43,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-bg);
 }
 
 #root {
@@ -27,8 +51,10 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
+  color: inherit;
 }
 
 button {
