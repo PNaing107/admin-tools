@@ -48,13 +48,14 @@ export function findMissingHeaders(headers: string[], required: readonly string[
   return required.filter((header) => !present.has(header))
 }
 
-/** Keep only the named columns, in the order they currently appear. */
+/** Keep only the named columns, in the order they are listed. */
 export function keepColumns(data: CsvData, columns: readonly string[]): CsvData {
   const headers = getCsvHeaders(data)
-  const keep = new Set(columns)
-  const indices = headers
-    .map((header, index) => ({ header, index }))
-    .filter(({ header }) => keep.has(header))
+  const indexByHeader = new Map(headers.map((header, index) => [header, index]))
+  const indices = columns.flatMap((header) => {
+    const index = indexByHeader.get(header)
+    return index === undefined ? [] : [{ header, index }]
+  })
 
   const headerRow = indices.map(({ header }) => header)
   const body = data.slice(1).map((row) => indices.map(({ index }) => row[index] ?? ''))

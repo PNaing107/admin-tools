@@ -33,6 +33,9 @@ export const REQUIRED_STARTLIST_HEADERS = [
   'Category',
   'Please select the race category being entered. Only people who are female sex at birth are eligible to compete in the Female category. All individuals including transgender people are eligible to compete in the Open category.',
   'Time (mm:ss)',
+  'Date Of Birth',
+  'Club',
+  'British Triathlon Federation',
 ] as const
 
 export default function StartlistGenerator() {
