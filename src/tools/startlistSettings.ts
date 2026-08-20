@@ -8,6 +8,29 @@ export const SEEDING_ORDER_OPTIONS: { value: AthleteSeedingOrder; label: string 
 
 export const defaultSeedingOrder: AthleteSeedingOrder = 'fastest-to-slowest'
 
+export const JUNIOR_RACE_CATEGORIES = [
+  'Micro Category',
+  'Mini 8',
+  'Mini 9 - 10',
+  'Mini 11 - 12',
+  'Mini 13 - 14',
+  'Mini 15 - 16',
+] as const
+
+export type JuniorRaceCategory = (typeof JUNIOR_RACE_CATEGORIES)[number]
+
+/** Maps age at end of year to the Junior race category, or null if outside Mini/Micro bands. */
+export function getJuniorRaceCategory(ageAtEndOfYear: number): JuniorRaceCategory | null {
+  if (!Number.isFinite(ageAtEndOfYear) || ageAtEndOfYear < 0) return null
+  if (ageAtEndOfYear < 8) return 'Micro Category'
+  if (ageAtEndOfYear === 8) return 'Mini 8'
+  if (ageAtEndOfYear <= 10) return 'Mini 9 - 10'
+  if (ageAtEndOfYear <= 12) return 'Mini 11 - 12'
+  if (ageAtEndOfYear <= 14) return 'Mini 13 - 14'
+  if (ageAtEndOfYear <= 16) return 'Mini 15 - 16'
+  return null
+}
+
 export interface StartlistSettings {
   ageCategory: AgeCategory
   registrationStartTime: string

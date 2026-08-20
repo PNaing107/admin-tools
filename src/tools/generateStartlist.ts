@@ -1,13 +1,16 @@
 import {
   getCsvHeaders,
   keepColumns,
+  type ColumnCount,
   type CsvData,
 } from '../utils/csv'
 import {
   defaultSeedingOrder,
   formatMinutesAsClock,
+  getJuniorRaceCategory,
   getRegistrationSlotWindows,
   getSwimmersInPoolAtOnce,
+  JUNIOR_RACE_CATEGORIES,
   parseTimeToMinutes,
   type AgeCategory,
   type AthleteSeedingOrder,
@@ -146,6 +149,44 @@ export function addAgeAtEndOfYearColumn(data: CsvData, year = new Date().getFull
     next.splice(insertAt, 0, value)
     return next
   })
+}
+
+export function assignJuniorRaceCategories(data: CsvData): CsvData {
+  const headers = getCsvHeaders(data)
+  const categoryIndex = headers.indexOf(CATEGORY_COLUMN)
+  const ageIndex = headers.indexOf(AGE_AT_END_OF_YEAR_COLUMN)
+  if (categoryIndex < 0 || ageIndex < 0) return data
+
+  return data.map((row, rowIndex) => {
+    if (rowIndex === 0) return row
+    const rawAge = (row[ageIndex] ?? '').trim()
+    if (!rawAge) return row
+    const age = Number(rawAge)
+    const juniorCategory = Number.isInteger(age) ? getJuniorRaceCategory(age) : null
+    if (!juniorCategory) return row
+    return row.map((cell, index) => (index === categoryIndex ? juniorCategory : cell))
+  })
+}
+
+export function countJuniorAthletesByRaceCategory(
+  data: CsvData,
+  year = new Date().getFullYear(),
+): ColumnCount[] {
+  const headers = getCsvHeaders(data)
+  const dobIndex = headers.indexOf(DATE_OF_BIRTH_COLUMN)
+  const tally = new Map<string, number>(JUNIOR_RACE_CATEGORIES.map((category) => [category, 0]))
+
+  if (dobIndex >= 0) {
+    for (const row of data.slice(1)) {
+      const age = ageAtEndOfYear(row[dobIndex] ?? '', year)
+      if (age === null) continue
+      const category = getJuniorRaceCategory(age)
+      if (!category) continue
+      tally.set(category, (tally.get(category) ?? 0) + 1)
+    }
+  }
+
+  return JUNIOR_RACE_CATEGORIES.map((value) => ({ value, count: tally.get(value) ?? 0 }))
 }
 
 function categoryValue(row: string[], categoryIndex: number): string {
@@ -336,7 +377,9 @@ export function buildStartlistCsv(
   const kept = keepColumns(data, requiredColumns)
   const withFullName = addFullNameColumn(kept)
   const withJuniorFields =
-    settings.ageCategory === 'Junior' ? addAgeAtEndOfYearColumn(withFullName) : withFullName
+    settings.ageCategory === 'Junior'
+      ? assignJuniorRaceCategories(addAgeAtEndOfYearColumn(withFullName))
+      : withFullName
   const sorted = sortStartlistRows(withJuniorFields, categoryOrder, seedingOrders)
   const withSlots = addRegistrationSlotColumn(sorted, settings)
   const withStartTimes = addRaceStartTimeColumn(withSlots, settings)

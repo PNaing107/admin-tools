@@ -12,8 +12,9 @@ import {
   type ColumnCount,
   type CsvData,
 } from '../utils/csv'
-import { buildStartlistCsv, startlistDownloadFilename } from './generateStartlist'
+import { buildStartlistCsv, countJuniorAthletesByRaceCategory, startlistDownloadFilename } from './generateStartlist'
 import {
+  JUNIOR_RACE_CATEGORIES,
   defaultSeedingOrder,
   defaultStartlistSettings,
   getAverageEntrantsPerSlot,
@@ -92,8 +93,17 @@ export default function StartlistGenerator() {
         setData(null)
         return
       }
-      const stats = countRowsByColumn(parsed, 'Category')
-      const categories = getUniqueColumnValues(parsed, 'Category')
+      const stats =
+        settings.ageCategory === 'Junior'
+          ? {
+              total: parsed.slice(1).length,
+              counts: countJuniorAthletesByRaceCategory(parsed),
+            }
+          : countRowsByColumn(parsed, 'Category')
+      const categories =
+        settings.ageCategory === 'Junior'
+          ? [...JUNIOR_RACE_CATEGORIES]
+          : getUniqueColumnValues(parsed, 'Category')
       setData(parsed)
       setFileName(file.name.endsWith('.csv') ? file.name : `${file.name}.csv`)
       setUploadStats(stats)
@@ -165,10 +175,12 @@ export default function StartlistGenerator() {
   }, [])
 
   const athleteCountByCategory = Object.fromEntries(
-    (data ? countRowsByColumn(data, 'Category').counts : []).map(({ value, count }) => [
-      value,
-      count,
-    ]),
+    (data
+      ? settings.ageCategory === 'Junior'
+        ? countJuniorAthletesByRaceCategory(data)
+        : countRowsByColumn(data, 'Category').counts
+      : []
+    ).map(({ value, count }) => [value, count]),
   )
 
   return (
