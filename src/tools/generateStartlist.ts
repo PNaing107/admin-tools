@@ -18,7 +18,9 @@ const CATEGORY_COLUMN = 'Category'
 const FIRST_NAME_COLUMN = 'First Name'
 const LAST_NAME_COLUMN = 'Last Name'
 const TIME_COLUMN = 'Time (mm:ss)'
+const DATE_OF_BIRTH_COLUMN = 'Date Of Birth'
 const FULL_NAME_COLUMN = 'Full Name'
+const AGE_AT_END_OF_YEAR_COLUMN = 'Age at End of Year'
 const REGISTRATION_SLOT_COLUMN = 'Registration Slot'
 const RACE_START_TIME_COLUMN = 'Race Start Time'
 const RACKING_NUMBER_COLUMN = 'Racking Number'
@@ -82,6 +84,67 @@ export function addFullNameColumn(data: CsvData): CsvData {
     const firstName = row[firstNameIndex] ?? ''
     const lastName = row[lastNameIndex] ?? ''
     return [...row, `${firstName} ${lastName}`]
+  })
+}
+
+function isValidYmd(year: number, month: number, day: number): boolean {
+  if (year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) return false
+  const date = new Date(year, month - 1, day)
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+}
+
+/** Parses a date of birth. Prefers ISO `YYYY-MM-DD`, then UK `DD/MM/YYYY`. */
+export function parseDateOfBirth(value: string): { year: number; month: number; day: number } | null {
+  const trimmed = value.trim().replace(/^\uFEFF/, '').replace(/^["']+|["']+$/g, '')
+  if (!trimmed) return null
+
+  const iso = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(trimmed)
+  if (iso) {
+    const year = Number(iso[1])
+    const month = Number(iso[2])
+    const day = Number(iso[3])
+    if (isValidYmd(year, month, day)) return { year, month, day }
+  }
+
+  const uk = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})/.exec(trimmed)
+  if (uk) {
+    const day = Number(uk[1])
+    const month = Number(uk[2])
+    const year = Number(uk[3])
+    if (isValidYmd(year, month, day)) return { year, month, day }
+  }
+
+  const serial = Number(trimmed)
+  if (Number.isInteger(serial) && serial > 200 && serial < 80000) {
+    const utc = new Date(Date.UTC(1899, 11, 30) + serial * 86400000)
+    return { year: utc.getUTCFullYear(), month: utc.getUTCMonth() + 1, day: utc.getUTCDate() }
+  }
+
+  return null
+}
+
+/** Age the athlete will be on 31 December of `year`. */
+export function ageAtEndOfYear(dateOfBirth: string, year: number): number | null {
+  const parsed = parseDateOfBirth(dateOfBirth)
+  if (!parsed) return null
+  return year - parsed.year
+}
+
+export function addAgeAtEndOfYearColumn(data: CsvData, year = new Date().getFullYear()): CsvData {
+  const headers = getCsvHeaders(data)
+  const dobIndex = headers.indexOf(DATE_OF_BIRTH_COLUMN)
+  const insertAt = dobIndex >= 0 ? dobIndex + 1 : headers.length
+
+  return data.map((row, rowIndex) => {
+    const next = [...row]
+    const value =
+      rowIndex === 0
+        ? AGE_AT_END_OF_YEAR_COLUMN
+        : dobIndex < 0
+          ? ''
+          : String(ageAtEndOfYear(row[dobIndex] ?? '', year) ?? '')
+    next.splice(insertAt, 0, value)
+    return next
   })
 }
 
@@ -272,7 +335,9 @@ export function buildStartlistCsv(
 ): CsvData {
   const kept = keepColumns(data, requiredColumns)
   const withFullName = addFullNameColumn(kept)
-  const sorted = sortStartlistRows(withFullName, categoryOrder, seedingOrders)
+  const withJuniorFields =
+    settings.ageCategory === 'Junior' ? addAgeAtEndOfYearColumn(withFullName) : withFullName
+  const sorted = sortStartlistRows(withJuniorFields, categoryOrder, seedingOrders)
   const withSlots = addRegistrationSlotColumn(sorted, settings)
   const withStartTimes = addRaceStartTimeColumn(withSlots, settings)
   const withRacks = addRackingNumberColumn(withStartTimes, settings)

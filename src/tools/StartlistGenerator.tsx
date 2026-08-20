@@ -20,23 +20,35 @@ import {
   getBikeRacksNeeded,
   getRegistrationSlotDurationMinutes,
   SEEDING_ORDER_OPTIONS,
+  type AgeCategory,
   type AthleteSeedingOrder,
   type StartlistSettings,
 } from './startlistSettings'
 import { StartlistSettingsForm } from './StartlistSettingsForm'
 import './StartlistGenerator.css'
 
+export const SENIOR_RACE_CATEGORY_HEADER =
+  'Please select the race category being entered. Only people who are female sex at birth are eligible to compete in the Female category. All individuals including transgender people are eligible to compete in the Open category.'
+
 export const REQUIRED_STARTLIST_HEADERS = [
   'Ref',
   'First Name',
   'Last Name',
   'Category',
-  'Please select the race category being entered. Only people who are female sex at birth are eligible to compete in the Female category. All individuals including transgender people are eligible to compete in the Open category.',
   'Time (mm:ss)',
   'Date Of Birth',
   'Club',
   'British Triathlon Federation',
 ] as const
+
+export function getRequiredStartlistHeaders(ageCategory: AgeCategory): readonly string[] {
+  if (ageCategory !== 'Senior') return REQUIRED_STARTLIST_HEADERS
+
+  const headers: string[] = [...REQUIRED_STARTLIST_HEADERS]
+  const categoryIndex = headers.indexOf('Category')
+  headers.splice(categoryIndex + 1, 0, SENIOR_RACE_CATEGORY_HEADER)
+  return headers
+}
 
 export default function StartlistGenerator() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -71,7 +83,10 @@ export default function StartlistGenerator() {
     try {
       const text = await file.text()
       const parsed = normalizeRows(await parseCsv(text))
-      const missing = findMissingHeaders(getCsvHeaders(parsed), REQUIRED_STARTLIST_HEADERS)
+      const missing = findMissingHeaders(
+        getCsvHeaders(parsed),
+        getRequiredStartlistHeaders(settings.ageCategory),
+      )
       if (missing.length > 0) {
         setMissingHeaders(missing)
         setData(null)
@@ -95,7 +110,7 @@ export default function StartlistGenerator() {
     } finally {
       event.target.value = ''
     }
-  }, [])
+  }, [settings.ageCategory])
 
   const handleDownload = useCallback(() => {
     if (data) downloadCsv(data, fileName)
@@ -105,7 +120,7 @@ export default function StartlistGenerator() {
     if (!data) return
     const processed = buildStartlistCsv(
       data,
-      REQUIRED_STARTLIST_HEADERS,
+      getRequiredStartlistHeaders(settings.ageCategory),
       raceCategories,
       seedingOrders,
       settings,
