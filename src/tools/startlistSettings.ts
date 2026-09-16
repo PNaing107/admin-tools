@@ -1,4 +1,5 @@
 export type AgeCategory = 'Senior' | 'Junior'
+export type SwimVenue = 'Pool' | 'Sea'
 export type AthleteSeedingOrder = 'fastest-to-slowest' | 'slowest-to-fastest'
 
 export const SEEDING_ORDER_OPTIONS: { value: AthleteSeedingOrder; label: string }[] = [
@@ -36,6 +37,7 @@ export interface StartlistSettings {
   registrationStartTime: string
   registrationEndTime: string
   registrationSlots: number
+  swimVenue: SwimVenue
   swimLanes: number
   swimmersPerLane: number
   swimStartTime: string
@@ -49,6 +51,7 @@ export const defaultStartlistSettings: StartlistSettings = {
   registrationStartTime: '06:30',
   registrationEndTime: '07:45',
   registrationSlots: 5,
+  swimVenue: 'Pool',
   swimLanes: 4,
   swimmersPerLane: 2,
   swimStartTime: '08:00',

@@ -1,6 +1,8 @@
 import type { ChangeEvent } from 'react'
-import type { AgeCategory, StartlistSettings } from './startlistSettings'
+import type { AgeCategory, StartlistSettings, SwimVenue } from './startlistSettings'
 import './StartlistSettingsForm.css'
+
+const SWIM_VENUE_OPTIONS: SwimVenue[] = ['Pool', 'Sea']
 
 interface StartlistSettingsFormProps {
   settings: StartlistSettings
@@ -70,29 +72,57 @@ export function StartlistSettingsForm({ settings, onChange }: StartlistSettingsF
 
       <fieldset className="settings-fieldset">
         <legend>Swim</legend>
+        <div className="settings-field settings-field--toggle">
+          <span id="swim-venue-label">Swim Type</span>
+          <div
+            className="settings-toggle"
+            role="group"
+            aria-labelledby="swim-venue-label"
+          >
+            {SWIM_VENUE_OPTIONS.map((venue) => (
+              <button
+                key={venue}
+                type="button"
+                className={
+                  settings.swimVenue === venue
+                    ? 'settings-toggle-option is-active'
+                    : 'settings-toggle-option'
+                }
+                aria-pressed={settings.swimVenue === venue}
+                onClick={() => update('swimVenue', venue)}
+              >
+                {venue}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="settings-grid">
-          <label className="settings-field">
-            <span>Number of Swim Lanes</span>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              step={1}
-              value={settings.swimLanes}
-              onChange={handleNumberChange('swimLanes')}
-            />
-          </label>
-          <label className="settings-field">
-            <span>Swimmers Per Lane</span>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              step={1}
-              value={settings.swimmersPerLane}
-              onChange={handleNumberChange('swimmersPerLane')}
-            />
-          </label>
+          {settings.swimVenue === 'Pool' && (
+            <>
+              <label className="settings-field">
+                <span>Number of Swim Lanes</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  step={1}
+                  value={settings.swimLanes}
+                  onChange={handleNumberChange('swimLanes')}
+                />
+              </label>
+              <label className="settings-field">
+                <span>Swimmers Per Lane</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={settings.swimmersPerLane}
+                  onChange={handleNumberChange('swimmersPerLane')}
+                />
+              </label>
+            </>
+          )}
           <label className="settings-field">
             <span>First Swim Wave Start Time</span>
             <input
@@ -101,17 +131,19 @@ export function StartlistSettingsForm({ settings, onChange }: StartlistSettingsF
               onChange={(e) => update('swimStartTime', e.target.value)}
             />
           </label>
-          <label className="settings-field">
-            <span>Average Swim Time (minutes)</span>
-            <input
-              type="number"
-              min={1}
-              max={60}
-              step={1}
-              value={settings.averageSwimTimeInMinutes}
-              onChange={handleNumberChange('averageSwimTimeInMinutes')}
-            />
-          </label>
+          {settings.swimVenue === 'Pool' && (
+            <label className="settings-field">
+              <span>Average Swim Time (minutes)</span>
+              <input
+                type="number"
+                min={1}
+                max={60}
+                step={1}
+                value={settings.averageSwimTimeInMinutes}
+                onChange={handleNumberChange('averageSwimTimeInMinutes')}
+              />
+            </label>
+          )}
           <label className="settings-field">
             <span>Gap Between Each Race Category (minutes)</span>
             <input

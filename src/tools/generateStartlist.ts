@@ -273,9 +273,28 @@ export function assignRaceStartTimes(
   settings: StartlistSettings,
 ): string[] {
   const times = rows.map(() => '')
-  const capacity = getSwimmersInPoolAtOnce(settings)
   const swimStart = parseTimeToMinutes(settings.swimStartTime)
-  if (capacity === null || swimStart === null || settings.averageSwimTimeInMinutes < 0) {
+  if (swimStart === null) {
+    return times
+  }
+
+  if (settings.swimVenue === 'Sea') {
+    let lastCategoryStart: number | null = null
+    for (const indices of groupConsecutiveCategoryIndices(rows, categoryIndex)) {
+      const categoryStart: number =
+        lastCategoryStart === null
+          ? swimStart
+          : lastCategoryStart + Math.max(0, settings.gapBetweenRaceCategoriesInMinutes)
+      for (const index of indices) {
+        times[index] = formatMinutesAsClock(categoryStart)
+      }
+      lastCategoryStart = categoryStart
+    }
+    return times
+  }
+
+  const capacity = getSwimmersInPoolAtOnce(settings)
+  if (capacity === null || settings.averageSwimTimeInMinutes < 0) {
     return times
   }
 
