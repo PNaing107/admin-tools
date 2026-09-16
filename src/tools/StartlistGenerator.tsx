@@ -12,7 +12,12 @@ import {
   type ColumnCount,
   type CsvData,
 } from '../utils/csv'
-import { buildStartlistCsv, countJuniorAthletesByRaceCategory, startlistDownloadFilename } from './generateStartlist'
+import {
+  buildStartlistCsv,
+  countJuniorAthletesByRaceCategory,
+  SENIOR_RACE_CATEGORY_HEADER,
+  startlistDownloadFilename,
+} from './generateStartlist'
 import {
   JUNIOR_RACE_CATEGORIES,
   defaultSeedingOrder,
@@ -28,8 +33,7 @@ import {
 import { StartlistSettingsForm } from './StartlistSettingsForm'
 import './StartlistGenerator.css'
 
-export const SENIOR_RACE_CATEGORY_HEADER =
-  'Please select the race category being entered. Only people who are female sex at birth are eligible to compete in the Female category. All individuals including transgender people are eligible to compete in the Open category.'
+export { SENIOR_RACE_CATEGORY_HEADER }
 
 export const JUNIOR_GENDER_HEADER = 'Gender'
 

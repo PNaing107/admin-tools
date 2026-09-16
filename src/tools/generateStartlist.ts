@@ -14,8 +14,12 @@ import {
   parseTimeToMinutes,
   type AgeCategory,
   type AthleteSeedingOrder,
+  type SeaAgeWaveSplit,
   type StartlistSettings,
 } from './startlistSettings'
+
+export const SENIOR_RACE_CATEGORY_HEADER =
+  'Please select the race category being entered. Only people who are female sex at birth are eligible to compete in the Female category. All individuals including transgender people are eligible to compete in the Open category.'
 
 const CATEGORY_COLUMN = 'Category'
 const FIRST_NAME_COLUMN = 'First Name'
@@ -261,17 +265,95 @@ function groupConsecutiveCategoryIndices(rows: string[][], categoryIndex: number
   return groups
 }
 
-export function addRaceStartTimeColumn(data: CsvData, settings: StartlistSettings): CsvData {
+export function addRaceStartTimeColumn(
+  data: CsvData,
+  settings: StartlistSettings,
+  seedingOrders: Record<string, AthleteSeedingOrder> = {},
+): CsvData {
   const headerRow = [...(data[0] ?? []), RACE_START_TIME_COLUMN]
+  const headers = getCsvHeaders(data)
   const rows = data.slice(1)
-  const times = assignRaceStartTimes(rows, getCsvHeaders(data).indexOf(CATEGORY_COLUMN), settings)
+  const times = assignRaceStartTimes(rows, headers, settings, seedingOrders)
   return [headerRow, ...rows.map((row, index) => [...row, times[index] ?? ''])]
+}
+
+function seedingOrderForCategory(
+  category: string,
+  seedingOrders: Record<string, AthleteSeedingOrder>,
+): AthleteSeedingOrder {
+  return seedingOrders[category] ?? defaultSeedingOrder
+}
+
+function usesCustomAgeCategories(
+  row: string[],
+  categoryIndex: number,
+  seedingOrders: Record<string, AthleteSeedingOrder>,
+): boolean {
+  return (
+    seedingOrderForCategory(categoryValue(row, categoryIndex), seedingOrders) ===
+    'custom-age-categories'
+  )
+}
+
+function matchesSeaAgeWaveSplit(
+  row: string[],
+  genderIndex: number,
+  dobIndex: number,
+  split: SeaAgeWaveSplit,
+  year: number,
+): boolean {
+  if (genderIndex < 0 || dobIndex < 0) return false
+  const gender = (row[genderIndex] ?? '').trim()
+  if (gender !== split.genderCategory) return false
+  const age = ageAtEndOfYear(row[dobIndex] ?? '', year)
+  return age !== null && age <= split.ageCutoff
+}
+
+function assignCustomAgeCategoryStartTimes(
+  rows: string[][],
+  headers: string[],
+  settings: StartlistSettings,
+  seedingOrders: Record<string, AthleteSeedingOrder>,
+  swimStart: number,
+): string[] {
+  const times = rows.map(() => '')
+  const categoryIndex = headers.indexOf(CATEGORY_COLUMN)
+  const genderIndex = headers.indexOf(SENIOR_RACE_CATEGORY_HEADER)
+  const dobIndex = headers.indexOf(DATE_OF_BIRTH_COLUMN)
+  const year = new Date().getFullYear()
+  const assigned = new Set<number>()
+  let waveStart = swimStart
+  let lastUsedStart = swimStart
+
+  for (const split of settings.seaAgeWaveSplits) {
+    for (let i = 0; i < rows.length; i++) {
+      if (assigned.has(i)) continue
+      if (!usesCustomAgeCategories(rows[i], categoryIndex, seedingOrders)) continue
+      if (!matchesSeaAgeWaveSplit(rows[i], genderIndex, dobIndex, split, year)) continue
+      times[i] = formatMinutesAsClock(waveStart)
+      assigned.add(i)
+    }
+    lastUsedStart = waveStart
+    waveStart += Math.max(0, settings.gapBetweenRaceCategoriesInMinutes)
+  }
+
+  const remainingStart =
+    settings.seaAgeWaveSplits.length === 1 ? waveStart : lastUsedStart
+  const remainingTime = formatMinutesAsClock(remainingStart)
+  for (let i = 0; i < rows.length; i++) {
+    if (assigned.has(i)) continue
+    if (!usesCustomAgeCategories(rows[i], categoryIndex, seedingOrders)) continue
+    times[i] = remainingTime
+  }
+
+  return times
 }
 
 export function assignRaceStartTimes(
   rows: string[][],
-  categoryIndex: number,
+  headers: string[],
   settings: StartlistSettings,
+  seedingOrders: Record<string, AthleteSeedingOrder> = {},
 ): string[] {
   const times = rows.map(() => '')
   const swimStart = parseTimeToMinutes(settings.swimStartTime)
@@ -279,28 +361,42 @@ export function assignRaceStartTimes(
     return times
   }
 
+  const categoryIndex = headers.indexOf(CATEGORY_COLUMN)
+  const customTimes =
+    settings.seaAgeWaveSplits.length > 0
+      ? assignCustomAgeCategoryStartTimes(rows, headers, settings, seedingOrders, swimStart)
+      : times
+
+  if (customTimes.every((time) => time !== '') || rows.length === 0) {
+    return customTimes
+  }
+
   if (settings.swimVenue === 'Sea') {
     let lastCategoryStart: number | null = null
     for (const indices of groupConsecutiveCategoryIndices(rows, categoryIndex)) {
+      const pending = indices.filter((index) => customTimes[index] === '')
+      if (pending.length === 0) continue
       const categoryStart: number =
         lastCategoryStart === null
           ? swimStart
           : lastCategoryStart + Math.max(0, settings.gapBetweenRaceCategoriesInMinutes)
-      for (const index of indices) {
-        times[index] = formatMinutesAsClock(categoryStart)
+      for (const index of pending) {
+        customTimes[index] = formatMinutesAsClock(categoryStart)
       }
       lastCategoryStart = categoryStart
     }
-    return times
+    return customTimes
   }
 
   const capacity = getSwimmersInPoolAtOnce(settings)
   if (capacity === null || settings.averageSwimTimeInMinutes < 0) {
-    return times
+    return customTimes
   }
 
   let lastWaveStart: number | null = null
   for (const indices of groupConsecutiveCategoryIndices(rows, categoryIndex)) {
+    const pending = indices.filter((index) => customTimes[index] === '')
+    if (pending.length === 0) continue
     const delayToNextCategory = Math.max(
       settings.gapBetweenRaceCategoriesInMinutes,
       settings.averageSwimTimeInMinutes,
@@ -308,15 +404,15 @@ export function assignRaceStartTimes(
     const categoryStart: number =
       lastWaveStart === null ? swimStart : lastWaveStart + delayToNextCategory
 
-    for (let i = 0; i < indices.length; i++) {
+    for (let i = 0; i < pending.length; i++) {
       const waveStart: number =
         categoryStart + Math.floor(i / capacity) * settings.averageSwimTimeInMinutes
-      times[indices[i]] = formatMinutesAsClock(waveStart)
+      customTimes[pending[i]] = formatMinutesAsClock(waveStart)
       lastWaveStart = waveStart
     }
   }
 
-  return times
+  return customTimes
 }
 
 export function addRackingNumberColumn(data: CsvData, settings: StartlistSettings): CsvData {
@@ -402,7 +498,7 @@ export function buildStartlistCsv(
       : withFullName
   const sorted = sortStartlistRows(withJuniorFields, categoryOrder, seedingOrders)
   const withSlots = addRegistrationSlotColumn(sorted, settings)
-  const withStartTimes = addRaceStartTimeColumn(withSlots, settings)
+  const withStartTimes = addRaceStartTimeColumn(withSlots, settings, seedingOrders)
   const withRacks = addRackingNumberColumn(withStartTimes, settings)
   return addRaceNumberColumn(withRacks, outOfSequenceBibs, firstRegularBibs)
 }
