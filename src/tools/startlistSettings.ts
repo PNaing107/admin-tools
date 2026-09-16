@@ -1,7 +1,10 @@
 export type AgeCategory = 'Senior' | 'Junior'
 export type SwimVenue = 'Pool' | 'Sea'
 export type GenderCategory = 'Open' | 'Female'
-export type AthleteSeedingOrder = 'fastest-to-slowest' | 'slowest-to-fastest'
+export type AthleteSeedingOrder =
+  | 'custom-age-categories'
+  | 'fastest-to-slowest'
+  | 'slowest-to-fastest'
 
 export const GENDER_CATEGORY_OPTIONS: GenderCategory[] = ['Open', 'Female']
 
@@ -11,11 +14,12 @@ export interface SeaAgeWaveSplit {
 }
 
 export const SEEDING_ORDER_OPTIONS: { value: AthleteSeedingOrder; label: string }[] = [
+  { value: 'custom-age-categories', label: 'Custom Age Categories' },
   { value: 'fastest-to-slowest', label: 'Fastest to Slowest' },
   { value: 'slowest-to-fastest', label: 'Slowest to Fastest' },
 ]
 
-export const defaultSeedingOrder: AthleteSeedingOrder = 'fastest-to-slowest'
+export const defaultSeedingOrder: AthleteSeedingOrder = 'custom-age-categories'
 
 export const JUNIOR_RACE_CATEGORIES = [
   'Micro Category',

@@ -218,7 +218,8 @@ export function sortStartlistRows(
     if (timeB === null) return -1
 
     const order = seedingOrders[categoryA] ?? defaultSeedingOrder
-    return order === 'fastest-to-slowest' ? timeA - timeB : timeB - timeA
+    if (order === 'slowest-to-fastest') return timeB - timeA
+    return timeA - timeB
   })
 
   return [headerRow, ...sortedRows]
