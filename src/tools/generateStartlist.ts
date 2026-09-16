@@ -309,44 +309,49 @@ function matchesSeaAgeWaveSplit(
   return age !== null && age <= split.ageCutoff
 }
 
-function assignCustomAgeCategoryStartTimes(
+function assignCustomAgeCategoryStartTimesForGroup(
+  times: string[],
   rows: string[][],
+  indices: number[],
   headers: string[],
   settings: StartlistSettings,
-  seedingOrders: Record<string, AthleteSeedingOrder>,
-  swimStart: number,
-): string[] {
-  const times = rows.map(() => '')
-  const categoryIndex = headers.indexOf(CATEGORY_COLUMN)
+  groupStart: number,
+): number {
   const genderIndex = headers.indexOf(SENIOR_RACE_CATEGORY_HEADER)
   const dobIndex = headers.indexOf(DATE_OF_BIRTH_COLUMN)
   const year = new Date().getFullYear()
+  const gap = Math.max(0, settings.gapBetweenRaceCategoriesInMinutes)
   const assigned = new Set<number>()
-  let waveStart = swimStart
-  let lastUsedStart = swimStart
+  let waveStart = groupStart
+  let lastUsedStart = groupStart
+  let lastAssignedStart = groupStart
 
   for (const split of settings.seaAgeWaveSplits) {
-    for (let i = 0; i < rows.length; i++) {
+    let assignedThisWave = false
+    for (const i of indices) {
       if (assigned.has(i)) continue
-      if (!usesCustomAgeCategories(rows[i], categoryIndex, seedingOrders)) continue
       if (!matchesSeaAgeWaveSplit(rows[i], genderIndex, dobIndex, split, year)) continue
       times[i] = formatMinutesAsClock(waveStart)
       assigned.add(i)
+      assignedThisWave = true
     }
     lastUsedStart = waveStart
-    waveStart += Math.max(0, settings.gapBetweenRaceCategoriesInMinutes)
+    if (assignedThisWave) lastAssignedStart = waveStart
+    waveStart += gap
   }
 
   const remainingStart =
     settings.seaAgeWaveSplits.length === 1 ? waveStart : lastUsedStart
   const remainingTime = formatMinutesAsClock(remainingStart)
-  for (let i = 0; i < rows.length; i++) {
+  let assignedRemaining = false
+  for (const i of indices) {
     if (assigned.has(i)) continue
-    if (!usesCustomAgeCategories(rows[i], categoryIndex, seedingOrders)) continue
     times[i] = remainingTime
+    assignedRemaining = true
   }
+  if (assignedRemaining) lastAssignedStart = remainingStart
 
-  return times
+  return lastAssignedStart
 }
 
 export function assignRaceStartTimes(
@@ -362,41 +367,44 @@ export function assignRaceStartTimes(
   }
 
   const categoryIndex = headers.indexOf(CATEGORY_COLUMN)
-  const customTimes =
-    settings.seaAgeWaveSplits.length > 0
-      ? assignCustomAgeCategoryStartTimes(rows, headers, settings, seedingOrders, swimStart)
-      : times
-
-  if (customTimes.every((time) => time !== '') || rows.length === 0) {
-    return customTimes
-  }
+  const gap = Math.max(0, settings.gapBetweenRaceCategoriesInMinutes)
 
   if (settings.swimVenue === 'Sea') {
-    let lastCategoryStart: number | null = null
+    let lastWaveStart: number | null = null
     for (const indices of groupConsecutiveCategoryIndices(rows, categoryIndex)) {
-      const pending = indices.filter((index) => customTimes[index] === '')
-      if (pending.length === 0) continue
+      if (indices.length === 0) continue
       const categoryStart: number =
-        lastCategoryStart === null
-          ? swimStart
-          : lastCategoryStart + Math.max(0, settings.gapBetweenRaceCategoriesInMinutes)
-      for (const index of pending) {
-        customTimes[index] = formatMinutesAsClock(categoryStart)
+        lastWaveStart === null ? swimStart : lastWaveStart + gap
+      const useCustomAgeWaves =
+        settings.seaAgeWaveSplits.length > 0 &&
+        usesCustomAgeCategories(rows[indices[0]], categoryIndex, seedingOrders)
+
+      if (useCustomAgeWaves) {
+        lastWaveStart = assignCustomAgeCategoryStartTimesForGroup(
+          times,
+          rows,
+          indices,
+          headers,
+          settings,
+          categoryStart,
+        )
+      } else {
+        for (const index of indices) {
+          times[index] = formatMinutesAsClock(categoryStart)
+        }
+        lastWaveStart = categoryStart
       }
-      lastCategoryStart = categoryStart
     }
-    return customTimes
+    return times
   }
 
   const capacity = getSwimmersInPoolAtOnce(settings)
   if (capacity === null || settings.averageSwimTimeInMinutes < 0) {
-    return customTimes
+    return times
   }
 
   let lastWaveStart: number | null = null
   for (const indices of groupConsecutiveCategoryIndices(rows, categoryIndex)) {
-    const pending = indices.filter((index) => customTimes[index] === '')
-    if (pending.length === 0) continue
     const delayToNextCategory = Math.max(
       settings.gapBetweenRaceCategoriesInMinutes,
       settings.averageSwimTimeInMinutes,
@@ -404,15 +412,15 @@ export function assignRaceStartTimes(
     const categoryStart: number =
       lastWaveStart === null ? swimStart : lastWaveStart + delayToNextCategory
 
-    for (let i = 0; i < pending.length; i++) {
+    for (let i = 0; i < indices.length; i++) {
       const waveStart: number =
         categoryStart + Math.floor(i / capacity) * settings.averageSwimTimeInMinutes
-      customTimes[pending[i]] = formatMinutesAsClock(waveStart)
+      times[indices[i]] = formatMinutesAsClock(waveStart)
       lastWaveStart = waveStart
     }
   }
 
-  return customTimes
+  return times
 }
 
 export function addRackingNumberColumn(data: CsvData, settings: StartlistSettings): CsvData {
