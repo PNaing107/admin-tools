@@ -221,3 +221,10 @@
   background: var(--color-surface-hover);
   border-color: var(--color-accent);
 }
+
+.settings-age-split-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--color-error-text);
+}

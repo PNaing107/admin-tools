@@ -273,6 +273,12 @@ export function StartlistSettingsForm({ settings, onChange }: StartlistSettingsF
             )}
           </div>
         )}
+        {settings.swimVenue === 'Sea' && settings.splitStartWavesByAgeCategories && (
+          <p className="settings-age-split-note">
+            NOTE: the order in which you create these Age Categories matters. The first group
+            created will start first.
+          </p>
+        )}
       </fieldset>
 
       <fieldset className="settings-fieldset">
