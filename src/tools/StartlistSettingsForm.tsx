@@ -1,8 +1,23 @@
-import type { ChangeEvent } from 'react'
-import type { AgeCategory, StartlistSettings, SwimVenue } from './startlistSettings'
+import { useState, type ChangeEvent } from 'react'
+import {
+  GENDER_CATEGORY_OPTIONS,
+  type AgeCategory,
+  type GenderCategory,
+  type StartlistSettings,
+  type SwimVenue,
+} from './startlistSettings'
 import './StartlistSettingsForm.css'
 
 const SWIM_VENUE_OPTIONS: SwimVenue[] = ['Pool', 'Sea']
+const AGE_CUTOFF_MIN = 17
+const AGE_CUTOFF_MAX = 80
+
+function parseAgeCutoff(value: string): number | null {
+  if (!/^-?\d+$/.test(value.trim())) return null
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed < AGE_CUTOFF_MIN || parsed > AGE_CUTOFF_MAX) return null
+  return parsed
+}
 
 interface StartlistSettingsFormProps {
   settings: StartlistSettings
@@ -10,6 +25,9 @@ interface StartlistSettingsFormProps {
 }
 
 export function StartlistSettingsForm({ settings, onChange }: StartlistSettingsFormProps) {
+  const [draftGenderCategory, setDraftGenderCategory] = useState<GenderCategory>('Open')
+  const [draftAgeCutoff, setDraftAgeCutoff] = useState('')
+
   const update = <K extends keyof StartlistSettings>(key: K, value: StartlistSettings[K]) => {
     onChange({ ...settings, [key]: value })
   }
@@ -18,6 +36,31 @@ export function StartlistSettingsForm({ settings, onChange }: StartlistSettingsF
     (key: keyof StartlistSettings) => (event: ChangeEvent<HTMLInputElement>) => {
       update(key, Number(event.target.value) as StartlistSettings[typeof key])
     }
+
+  const parsedAgeCutoff = parseAgeCutoff(draftAgeCutoff)
+  const isDuplicateSplit =
+    parsedAgeCutoff !== null &&
+    settings.seaAgeWaveSplits.some(
+      (split) =>
+        split.genderCategory === draftGenderCategory && split.ageCutoff === parsedAgeCutoff,
+    )
+  const canAddAgeSplit = parsedAgeCutoff !== null && !isDuplicateSplit
+
+  const addAgeWaveSplit = () => {
+    if (parsedAgeCutoff === null || isDuplicateSplit) return
+    update('seaAgeWaveSplits', [
+      ...settings.seaAgeWaveSplits,
+      { genderCategory: draftGenderCategory, ageCutoff: parsedAgeCutoff },
+    ])
+    setDraftAgeCutoff('')
+  }
+
+  const removeAgeWaveSplit = (index: number) => {
+    update(
+      'seaAgeWaveSplits',
+      settings.seaAgeWaveSplits.filter((_, splitIndex) => splitIndex !== index),
+    )
+  }
 
   return (
     <form className="settings-form" onSubmit={(e) => e.preventDefault()}>
@@ -156,6 +199,80 @@ export function StartlistSettingsForm({ settings, onChange }: StartlistSettingsF
             />
           </label>
         </div>
+        {settings.swimVenue === 'Sea' && (
+          <div className="settings-age-splits">
+            <label className="settings-field settings-field--checkbox">
+              <input
+                type="checkbox"
+                checked={settings.splitStartWavesByAgeCategories}
+                onChange={(event) =>
+                  update('splitStartWavesByAgeCategories', event.target.checked)
+                }
+              />
+              <span>I want to split the start waves by Age Categories</span>
+            </label>
+            {settings.splitStartWavesByAgeCategories && (
+              <>
+                <div className="settings-age-split-row">
+                  <label className="settings-field">
+                    <span>Gender Category</span>
+                    <select
+                      value={draftGenderCategory}
+                      onChange={(event) =>
+                        setDraftGenderCategory(event.target.value as GenderCategory)
+                      }
+                    >
+                      {GENDER_CATEGORY_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="settings-field">
+                    <span>Age Cut-off</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={AGE_CUTOFF_MIN}
+                      max={AGE_CUTOFF_MAX}
+                      step={1}
+                      value={draftAgeCutoff}
+                      onChange={(event) => setDraftAgeCutoff(event.target.value)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="settings-add-btn"
+                    onClick={addAgeWaveSplit}
+                    disabled={!canAddAgeSplit}
+                  >
+                    Add
+                  </button>
+                </div>
+                {settings.seaAgeWaveSplits.length > 0 && (
+                  <ul className="settings-age-split-list">
+                    {settings.seaAgeWaveSplits.map((split, index) => (
+                      <li key={`${split.genderCategory}-${split.ageCutoff}-${index}`}>
+                        <span>
+                          {split.genderCategory} — {split.ageCutoff}
+                        </span>
+                        <button
+                          type="button"
+                          className="settings-remove-btn"
+                          onClick={() => removeAgeWaveSplit(index)}
+                          aria-label={`Remove ${split.genderCategory} age cut-off ${split.ageCutoff}`}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </fieldset>
 
       <fieldset className="settings-fieldset">

@@ -124,3 +124,100 @@
   outline: none;
   box-shadow: inset 0 0 0 2px var(--color-accent-muted);
 }
+
+.settings-age-splits {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-field--checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+.settings-field--checkbox input[type='checkbox'] {
+  margin-top: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  accent-color: var(--color-accent);
+}
+
+.settings-age-split-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.settings-age-split-row .settings-field select,
+.settings-age-split-row .settings-field input[type='number'] {
+  max-width: 10rem;
+}
+
+.settings-add-btn,
+.settings-remove-btn {
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.settings-add-btn {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+  height: 2.35rem;
+}
+
+.settings-add-btn:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.settings-add-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.settings-age-split-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-age-split-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 28rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.settings-remove-btn {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.settings-remove-btn:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent);
+}

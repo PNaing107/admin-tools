@@ -1,6 +1,14 @@
 export type AgeCategory = 'Senior' | 'Junior'
 export type SwimVenue = 'Pool' | 'Sea'
+export type GenderCategory = 'Open' | 'Female'
 export type AthleteSeedingOrder = 'fastest-to-slowest' | 'slowest-to-fastest'
+
+export const GENDER_CATEGORY_OPTIONS: GenderCategory[] = ['Open', 'Female']
+
+export interface SeaAgeWaveSplit {
+  genderCategory: GenderCategory
+  ageCutoff: number
+}
 
 export const SEEDING_ORDER_OPTIONS: { value: AthleteSeedingOrder; label: string }[] = [
   { value: 'fastest-to-slowest', label: 'Fastest to Slowest' },
@@ -43,6 +51,8 @@ export interface StartlistSettings {
   swimStartTime: string
   averageSwimTimeInMinutes: number
   gapBetweenRaceCategoriesInMinutes: number
+  splitStartWavesByAgeCategories: boolean
+  seaAgeWaveSplits: SeaAgeWaveSplit[]
   bikesPerRack: number
 }
 
@@ -57,6 +67,8 @@ export const defaultStartlistSettings: StartlistSettings = {
   swimStartTime: '08:00',
   averageSwimTimeInMinutes: 9,
   gapBetweenRaceCategoriesInMinutes: 10,
+  splitStartWavesByAgeCategories: false,
+  seaAgeWaveSplits: [],
   bikesPerRack: 5,
 }
 
