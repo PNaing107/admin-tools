@@ -197,16 +197,48 @@ function categoryValue(row: string[], categoryIndex: number): string {
   return (row[categoryIndex] ?? '').trim() || '(blank)'
 }
 
+function matchesSeaAgeWaveSplit(
+  row: string[],
+  genderIndex: number,
+  dobIndex: number,
+  split: SeaAgeWaveSplit,
+  year: number,
+): boolean {
+  if (genderIndex < 0 || dobIndex < 0) return false
+  const gender = (row[genderIndex] ?? '').trim()
+  if (gender !== split.genderCategory) return false
+  const age = ageAtEndOfYear(row[dobIndex] ?? '', year)
+  return age !== null && age <= split.ageCutoff
+}
+
+function customAgeWaveRank(
+  row: string[],
+  genderIndex: number,
+  dobIndex: number,
+  splits: SeaAgeWaveSplit[],
+  year: number,
+): number {
+  for (let i = 0; i < splits.length; i++) {
+    if (matchesSeaAgeWaveSplit(row, genderIndex, dobIndex, splits[i], year)) return i
+  }
+  return splits.length
+}
+
 export function sortStartlistRows(
   data: CsvData,
   categoryOrder: string[],
   seedingOrders: Record<string, AthleteSeedingOrder>,
+  settings?: StartlistSettings,
 ): CsvData {
   const headers = getCsvHeaders(data)
   const categoryIndex = headers.indexOf(CATEGORY_COLUMN)
   const timeIndex = headers.indexOf(TIME_COLUMN)
+  const genderIndex = headers.indexOf(SENIOR_RACE_CATEGORY_HEADER)
+  const dobIndex = headers.indexOf(DATE_OF_BIRTH_COLUMN)
   const headerRow = data[0] ?? []
   const categoryRank = new Map(categoryOrder.map((category, index) => [category, index]))
+  const splits = settings?.swimVenue === 'Sea' ? settings.seaAgeWaveSplits : []
+  const year = new Date().getFullYear()
 
   const sortedRows = data.slice(1).sort((a, b) => {
     const categoryA = categoryValue(a, categoryIndex)
@@ -215,13 +247,19 @@ export function sortStartlistRows(
     const rankB = categoryRank.get(categoryB) ?? Number.MAX_SAFE_INTEGER
     if (rankA !== rankB) return rankA - rankB
 
+    const order = seedingOrders[categoryA] ?? defaultSeedingOrder
+    if (order === 'custom-age-categories' && splits.length > 0) {
+      const waveA = customAgeWaveRank(a, genderIndex, dobIndex, splits, year)
+      const waveB = customAgeWaveRank(b, genderIndex, dobIndex, splits, year)
+      if (waveA !== waveB) return waveA - waveB
+    }
+
     const timeA = parseSwimTimeToSeconds(a[timeIndex] ?? '')
     const timeB = parseSwimTimeToSeconds(b[timeIndex] ?? '')
     if (timeA === null && timeB === null) return 0
     if (timeA === null) return 1
     if (timeB === null) return -1
 
-    const order = seedingOrders[categoryA] ?? defaultSeedingOrder
     if (order === 'slowest-to-fastest') return timeB - timeA
     return timeA - timeB
   })
@@ -293,20 +331,6 @@ function usesCustomAgeCategories(
     seedingOrderForCategory(categoryValue(row, categoryIndex), seedingOrders) ===
     'custom-age-categories'
   )
-}
-
-function matchesSeaAgeWaveSplit(
-  row: string[],
-  genderIndex: number,
-  dobIndex: number,
-  split: SeaAgeWaveSplit,
-  year: number,
-): boolean {
-  if (genderIndex < 0 || dobIndex < 0) return false
-  const gender = (row[genderIndex] ?? '').trim()
-  if (gender !== split.genderCategory) return false
-  const age = ageAtEndOfYear(row[dobIndex] ?? '', year)
-  return age !== null && age <= split.ageCutoff
 }
 
 function assignCustomAgeCategoryStartTimesForGroup(
@@ -504,7 +528,7 @@ export function buildStartlistCsv(
     settings.ageCategory === 'Junior'
       ? assignJuniorRaceCategories(addAgeAtEndOfYearColumn(withFullName))
       : withFullName
-  const sorted = sortStartlistRows(withJuniorFields, categoryOrder, seedingOrders)
+  const sorted = sortStartlistRows(withJuniorFields, categoryOrder, seedingOrders, settings)
   const withSlots = addRegistrationSlotColumn(sorted, settings)
   const withStartTimes = addRaceStartTimeColumn(withSlots, settings, seedingOrders)
   const withRacks = addRackingNumberColumn(withStartTimes, settings)
